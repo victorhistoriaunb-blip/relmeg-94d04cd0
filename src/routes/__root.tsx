@@ -132,20 +132,39 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { auth } = useRelmeg();
+  const [pronto, setPronto] = useState(false);
+  useEffect(() => setPronto(true), []);
+
+  if (!pronto) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  if (!auth) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <LoginScreen />
+        <Toaster position="top-right" />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
+        <div className="aurora flex min-h-screen w-full bg-background">
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur">
+            <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/70 bg-background/70 px-4 backdrop-blur-xl">
               <SidebarTrigger />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
                 RelMeg · Inteligência Legislativa
               </span>
+              <span className="ml-auto hidden items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs text-muted-foreground sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" /> Sessão ativa
+              </span>
             </header>
-            <main className="flex-1 p-4 md:p-6">
+            <main className="flex-1 p-4 md:p-8">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
             </main>
