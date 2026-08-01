@@ -113,8 +113,8 @@ function Dashboards() {
       <div className="grid gap-4 xl:grid-cols-2">
         <Painel titulo="Parlamentares por UF" descricao="Top 15 unidades federativas" altura={360}>
           <BarChart data={porUf} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <XAxis type="number" stroke=EIXO fontSize={12} />
-            <YAxis type="category" dataKey="name" width={48} stroke=EIXO fontSize={12} />
+            <XAxis type="number" stroke={EIXO} fontSize={12} />
+            <YAxis type="category" dataKey="name" width={48} stroke={EIXO} fontSize={12} />
             <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
             <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
           </BarChart>
@@ -134,8 +134,8 @@ function Dashboards() {
 
         <Painel titulo="Parlamentares por Cargo" descricao="Composição da base por função">
           <BarChart data={porCargo}>
-            <XAxis dataKey="name" stroke=EIXO fontSize={12} />
-            <YAxis stroke=EIXO fontSize={12} allowDecimals={false} />
+            <XAxis dataKey="name" stroke={EIXO} fontSize={12} />
+            <YAxis stroke={EIXO} fontSize={12} allowDecimals={false} />
             <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
             <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -143,8 +143,8 @@ function Dashboards() {
 
         <Painel titulo="Parlamentares por Setor" descricao="Top 10 setores de interesse">
           <BarChart data={porSetor}>
-            <XAxis dataKey="name" stroke=EIXO fontSize={11} interval={0} angle={-20} height={56} textAnchor="end" />
-            <YAxis stroke=EIXO fontSize={12} allowDecimals={false} />
+            <XAxis dataKey="name" stroke={EIXO} fontSize={11} interval={0} angle={-20} height={56} textAnchor="end" />
+            <YAxis stroke={EIXO} fontSize={12} allowDecimals={false} />
             <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
             <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -152,8 +152,8 @@ function Dashboards() {
 
         <Painel titulo="Parlamentares por Termômetro" descricao="Comparativo de posicionamento" altura={300}>
           <BarChart data={porTermometro}>
-            <XAxis dataKey="name" stroke=EIXO fontSize={12} />
-            <YAxis stroke=EIXO fontSize={12} allowDecimals={false} />
+            <XAxis dataKey="name" stroke={EIXO} fontSize={12} />
+            <YAxis stroke={EIXO} fontSize={12} allowDecimals={false} />
             <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
             <Bar dataKey="total" radius={[4, 4, 0, 0]}>
               {porTermometro.map((entry, i) => (
