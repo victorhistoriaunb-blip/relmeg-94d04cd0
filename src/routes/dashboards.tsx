@@ -33,11 +33,11 @@ export const Route = createFileRoute("/dashboards")({
 });
 
 const CORES = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
+  "oklch(0.78 0.13 190)",
+  "oklch(0.68 0.14 250)",
+  "oklch(0.75 0.15 85)",
+  "oklch(0.7 0.16 330)",
+  "oklch(0.72 0.15 145)",
 ];
 
 function contar(values: string[], limite = 0) {
@@ -49,11 +49,14 @@ function contar(values: string[], limite = 0) {
   return limite ? list.slice(0, limite) : list;
 }
 
+const EIXO = "oklch(0.7 0.019 254)";
+const REALCE = "oklch(0.32 0.032 250)";
+
 const tooltipStyle = {
-  backgroundColor: "var(--popover)",
-  border: "1px solid var(--border)",
+  backgroundColor: "oklch(0.235 0.021 259)",
+  border: "1px solid oklch(0.32 0.022 258)",
   borderRadius: 8,
-  color: "var(--popover-foreground)",
+  color: "oklch(0.96 0.005 250)",
   fontSize: 12,
 };
 
