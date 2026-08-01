@@ -113,10 +113,10 @@ function Dashboards() {
       <div className="grid gap-4 xl:grid-cols-2">
         <Painel titulo="Parlamentares por UF" descricao="Top 15 unidades federativas" altura={360}>
           <BarChart data={porUf} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <XAxis type="number" stroke="var(--muted-foreground)" fontSize={12} />
-            <YAxis type="category" dataKey="name" width={48} stroke="var(--muted-foreground)" fontSize={12} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--accent)", opacity: 0.4 }} />
-            <Bar dataKey="total" fill="var(--chart-1)" radius={[0, 4, 4, 0]} />
+            <XAxis type="number" stroke=EIXO fontSize={12} />
+            <YAxis type="category" dataKey="name" width={48} stroke=EIXO fontSize={12} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
+            <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
           </BarChart>
         </Painel>
 
@@ -124,7 +124,7 @@ function Dashboards() {
           <PieChart>
             <Pie data={porPartido} dataKey="total" nameKey="name" innerRadius={70} outerRadius={110} paddingAngle={2}>
               {porPartido.map((entry, i) => (
-                <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="var(--card)" />
+                <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="oklch(0.235 0.021 259)" />
               ))}
             </Pie>
             <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -134,27 +134,27 @@ function Dashboards() {
 
         <Painel titulo="Parlamentares por Cargo" descricao="Composição da base por função">
           <BarChart data={porCargo}>
-            <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={12} />
-            <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--accent)", opacity: 0.4 }} />
-            <Bar dataKey="total" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+            <XAxis dataKey="name" stroke=EIXO fontSize={12} />
+            <YAxis stroke=EIXO fontSize={12} allowDecimals={false} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
+            <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
           </BarChart>
         </Painel>
 
         <Painel titulo="Parlamentares por Setor" descricao="Top 10 setores de interesse">
           <BarChart data={porSetor}>
-            <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} interval={0} angle={-20} height={56} textAnchor="end" />
-            <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--accent)", opacity: 0.4 }} />
-            <Bar dataKey="total" fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
+            <XAxis dataKey="name" stroke=EIXO fontSize={11} interval={0} angle={-20} height={56} textAnchor="end" />
+            <YAxis stroke=EIXO fontSize={12} allowDecimals={false} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
+            <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} />
           </BarChart>
         </Painel>
 
         <Painel titulo="Parlamentares por Termômetro" descricao="Comparativo de posicionamento" altura={300}>
           <BarChart data={porTermometro}>
-            <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={12} />
-            <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--accent)", opacity: 0.4 }} />
+            <XAxis dataKey="name" stroke=EIXO fontSize={12} />
+            <YAxis stroke=EIXO fontSize={12} allowDecimals={false} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
             <Bar dataKey="total" radius={[4, 4, 0, 0]}>
               {porTermometro.map((entry, i) => (
                 <Cell key={entry.name} fill={CORES[i % CORES.length]} />
