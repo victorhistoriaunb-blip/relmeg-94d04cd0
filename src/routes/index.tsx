@@ -22,15 +22,15 @@ import { setoresDe, type Parlamentar } from "@/lib/relmeg/types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Catálogo de Parlamentares — RelMeg" },
+      { title: "RelMeg - Inteligência Legislativa" },
       {
         name: "description",
         content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
       },
-      { property: "og:title", content: "Catálogo de Parlamentares — RelMeg" },
+      { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Organize e consulte sua base parlamentar com filtros inteligentes e briefings prontos.",
+        content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
       },
     ],
   }),

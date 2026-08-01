@@ -82,19 +82,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RelMeg — Inteligência Legislativa" },
+      { title: "RelMeg - Inteligência Legislativa" },
       {
         name: "description",
         content:
-          "Plataforma de inteligência legislativa para Relações Governamentais: catálogo, filtros e dashboards de parlamentares.",
+          "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
       },
-      { property: "og:title", content: "RelMeg — Inteligência Legislativa" },
+      { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Catálogo analítico de parlamentares para times de Relações Governamentais.",
+        content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "RelMeg - Inteligência Legislativa" },
+      { name: "twitter:description", content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5e4aa33b-3230-4b85-936f-8ce80cf99a17/id-preview-8e352ddc--d42e0e31-67ed-4d1f-bba3-8bd78c1c27f7.lovable.app-1785546738514.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5e4aa33b-3230-4b85-936f-8ce80cf99a17/id-preview-8e352ddc--d42e0e31-67ed-4d1f-bba3-8bd78c1c27f7.lovable.app-1785546738514.png" },
     ],
     links: [
       {
