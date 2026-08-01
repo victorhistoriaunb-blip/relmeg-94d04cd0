@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function EmptyState({ titulo, descricao }: { titulo: string; descricao: string }) {
   return (
-    <div className="panel rise-in flex flex-col items-center justify-center rounded-lg px-6 py-16 text-center">
+    <div className="panel glow-ring rise-in flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/12 text-primary ring-1 ring-primary/25">
         <UploadCloud className="h-6 w-6" />
       </span>

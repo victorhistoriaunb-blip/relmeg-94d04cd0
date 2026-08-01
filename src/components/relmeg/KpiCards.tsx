@@ -36,7 +36,7 @@ export function KpiCards({ data }: { data: Parlamentar[] }) {
       {cards.map((card, i) => (
         <div
           key={card.label}
-          className="panel rise-in rounded-lg p-4 transition-transform duration-300 hover:-translate-y-0.5"
+          className="panel panel-hover rise-in rounded-xl p-4 transition-transform duration-300 hover:-translate-y-0.5"
           style={{ animationDelay: `${i * 60}ms` }}
         >
           <div className="flex items-start justify-between gap-3">

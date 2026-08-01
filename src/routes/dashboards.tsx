@@ -33,11 +33,11 @@ export const Route = createFileRoute("/dashboards")({
 });
 
 const CORES = [
-  "oklch(0.78 0.13 190)",
-  "oklch(0.68 0.14 250)",
-  "oklch(0.75 0.15 85)",
-  "oklch(0.7 0.16 330)",
-  "oklch(0.72 0.15 145)",
+  "oklch(0.68 0.18 255)",
+  "oklch(0.75 0.14 215)",
+  "oklch(0.72 0.15 195)",
+  "oklch(0.62 0.19 285)",
+  "oklch(0.8 0.11 235)",
 ];
 
 function contar(values: string[], limite = 0) {
@@ -49,14 +49,14 @@ function contar(values: string[], limite = 0) {
   return limite ? list.slice(0, limite) : list;
 }
 
-const EIXO = "oklch(0.7 0.019 254)";
-const REALCE = "oklch(0.32 0.032 250)";
+const EIXO = "oklch(0.715 0.03 258)";
+const REALCE = "oklch(0.3 0.055 258)";
 
 const tooltipStyle = {
-  backgroundColor: "oklch(0.235 0.021 259)",
-  border: "1px solid oklch(0.32 0.022 258)",
+  backgroundColor: "oklch(0.198 0.038 264)",
+  border: "1px solid oklch(0.305 0.04 262)",
   borderRadius: 8,
-  color: "oklch(0.96 0.005 250)",
+  color: "oklch(0.965 0.008 250)",
   fontSize: 12,
 };
 
@@ -72,7 +72,7 @@ function Painel({
   children: React.ReactElement;
 }) {
   return (
-    <div className="panel rise-in rounded-lg p-5">
+    <div className="panel panel-hover rise-in rounded-xl p-5">
       <h2 className="font-display text-base font-semibold">{titulo}</h2>
       <p className="mb-4 text-xs text-muted-foreground">{descricao}</p>
       <ResponsiveContainer width="100%" height={altura}>
