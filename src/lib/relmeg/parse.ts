@@ -11,9 +11,11 @@ export type ParseResult = {
 export async function parseFile(file: File): Promise<ParseResult> {
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array", raw: false });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const firstName = wb.SheetNames[0];
+  const sheet = firstName ? wb.Sheets[firstName] : undefined;
+  if (!sheet) return { rows: [], headers: [], reconhecidos: [], faltantes: CAMPOS.map((c) => c.label) };
   const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-  const headers = json.length ? Object.keys(json[0]) : [];
+  const headers = json[0] ? Object.keys(json[0]) : [];
 
   const map = new Map<string, string>();
   for (const header of headers) {
