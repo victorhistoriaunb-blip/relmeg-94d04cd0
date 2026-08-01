@@ -84,7 +84,7 @@ function Catalogo() {
       </div>
 
       {filtrados.length === 0 ? (
-        <div className="panel rounded-lg p-10 text-center text-sm text-muted-foreground">
+        <div className="panel panel-hover rounded-xl p-10 text-center text-sm text-muted-foreground">
           Nenhum parlamentar corresponde aos filtros selecionados.
         </div>
       ) : view === "cards" ? (
@@ -93,7 +93,7 @@ function Catalogo() {
             <button
               key={p.id}
               onClick={() => setSelecionado(p)}
-              className="panel rise-in rounded-lg p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50"
+              className="panel panel-hover rise-in rounded-xl p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50"
               style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
             >
               <div className="flex items-start justify-between gap-2">
@@ -119,7 +119,7 @@ function Catalogo() {
           ))}
         </div>
       ) : (
-        <div className="panel overflow-hidden rounded-lg">
+        <div className="panel overflow-hidden rounded-xl">
           <Table>
             <TableHeader>
               <TableRow>

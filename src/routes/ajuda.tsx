@@ -59,7 +59,7 @@ function Ajuda() {
         <p className="text-sm text-muted-foreground">Guia rápido de operação do RelMeg.</p>
       </div>
 
-      <div className="panel rise-in rounded-lg p-5">
+      <div className="panel panel-hover rise-in rounded-xl p-5">
         <h2 className="text-sm font-semibold">Colunas reconhecidas</h2>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {CAMPOS.map((c) => (
@@ -70,7 +70,7 @@ function Ajuda() {
         </div>
       </div>
 
-      <div className="panel rounded-lg px-5">
+      <div className="panel panel-hover rounded-xl px-5">
         <Accordion type="single" collapsible defaultValue="0">
           {topicos.map((t, i) => (
             <AccordionItem key={t.titulo} value={String(i)}>

@@ -52,7 +52,7 @@ export function FilterBar({ data }: { data: Parlamentar[] }) {
   const ativos = Object.values(filters).filter(Boolean).length;
 
   return (
-    <div className="panel rounded-lg p-3">
+    <div className="panel panel-hover rounded-xl p-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
