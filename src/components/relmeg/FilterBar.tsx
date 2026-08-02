@@ -9,7 +9,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { clearFilters, setFilter, useRelmeg } from "@/lib/relmeg/store";
-import { setoresDe, type Filters, type Parlamentar } from "@/lib/relmeg/types";
+import {
+  setoresDe,
+  temasContrariosDe,
+  temasInteresseDe,
+  type Filters,
+  type Parlamentar,
+} from "@/lib/relmeg/types";
 
 const ALL = "__all__";
 
@@ -20,7 +26,8 @@ export function opcoes(data: Parlamentar[]) {
     uf: uniq(data.map((p) => p.uf)),
     cargo: uniq(data.map((p) => p.cargo)),
     setor: uniq(data.flatMap(setoresDe)),
-    termometro: uniq(data.map((p) => p.termometro)),
+    temaInteresse: uniq(data.flatMap(temasInteresseDe)),
+    temaContrario: uniq(data.flatMap(temasContrariosDe)),
   };
 }
 
@@ -30,9 +37,17 @@ export function aplicarFiltros(data: Parlamentar[], f: Filters) {
     if (f.partido && p.partido !== f.partido) return false;
     if (f.uf && p.uf !== f.uf) return false;
     if (f.cargo && p.cargo !== f.cargo) return false;
-    if (f.termometro && p.termometro !== f.termometro) return false;
     if (f.setor && !setoresDe(p).includes(f.setor)) return false;
-    if (busca && ![p.nome, p.partido, p.uf, p.interesses].join(" ").toLowerCase().includes(busca)) return false;
+    if (f.temaInteresse && !temasInteresseDe(p).includes(f.temaInteresse)) return false;
+    if (f.temaContrario && !temasContrariosDe(p).includes(f.temaContrario)) return false;
+    if (
+      busca &&
+      ![p.nome, p.partido, p.uf, p.cargo, ...temasInteresseDe(p), ...temasContrariosDe(p), ...setoresDe(p)]
+        .join(" ")
+        .toLowerCase()
+        .includes(busca)
+    )
+      return false;
     return true;
   });
 }
@@ -42,11 +57,12 @@ export function FilterBar({ data }: { data: Parlamentar[] }) {
   const opts = opcoes(data);
 
   const campos: { key: keyof Filters; label: string; values: string[] }[] = [
+    { key: "temaInteresse", label: "Tema de interesse", values: opts.temaInteresse },
+    { key: "temaContrario", label: "Tema contrário", values: opts.temaContrario },
+    { key: "setor", label: "Setor", values: opts.setor },
     { key: "partido", label: "Partido", values: opts.partido },
     { key: "uf", label: "UF", values: opts.uf },
     { key: "cargo", label: "Cargo", values: opts.cargo },
-    { key: "setor", label: "Setor", values: opts.setor },
-    { key: "termometro", label: "Termômetro", values: opts.termometro },
   ];
 
   const ativos = Object.values(filters).filter(Boolean).length;
@@ -59,7 +75,7 @@ export function FilterBar({ data }: { data: Parlamentar[] }) {
           <Input
             value={filters.busca}
             onChange={(e) => setFilter("busca", e.target.value)}
-            placeholder="Buscar parlamentar, partido, interesse…"
+            placeholder="Buscar por tema estratégico, parlamentar, partido ou setor…"
             className="pl-9"
           />
         </div>
@@ -69,7 +85,7 @@ export function FilterBar({ data }: { data: Parlamentar[] }) {
             value={filters[campo.key] || ALL}
             onValueChange={(v) => setFilter(campo.key, v === ALL ? "" : v)}
           >
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[170px]">
               <SelectValue placeholder={campo.label} />
             </SelectTrigger>
             <SelectContent>

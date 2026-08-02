@@ -1,18 +1,26 @@
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { briefing, setoresDe, type Parlamentar } from "@/lib/relmeg/types";
-import { TermometroBadge } from "./TermometroBadge";
+import {
+  briefing,
+  linkDe,
+  proposicoesDe,
+  setoresDe,
+  temasContrariosDe,
+  temasInteresseDe,
+  type Parlamentar,
+} from "@/lib/relmeg/types";
+import { TemaBadge } from "./TemaBadge";
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
       <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{titulo}</h3>
-      <div className="text-sm leading-relaxed">{children}</div>
+      <div className="text-sm leading-relaxed text-foreground">{children}</div>
     </section>
   );
 }
@@ -38,9 +46,9 @@ export function DetailPanel({
     }
   }
 
-  const proposicoes = parlamentar
-    ? [parlamentar.proposicao1, parlamentar.proposicao2, parlamentar.proposicao3].filter(Boolean)
-    : [];
+  const interesses = parlamentar ? temasInteresseDe(parlamentar) : [];
+  const contrarios = parlamentar ? temasContrariosDe(parlamentar) : [];
+  const proposicoes = parlamentar ? proposicoesDe(parlamentar) : [];
 
   return (
     <Sheet open={!!parlamentar} onOpenChange={(open) => !open && onClose()}>
@@ -54,32 +62,81 @@ export function DetailPanel({
                 <Badge variant="outline">
                   {[parlamentar.partido, parlamentar.uf].filter(Boolean).join("/") || "—"}
                 </Badge>
-                <TermometroBadge value={parlamentar.termometro} />
               </div>
             </SheetHeader>
             <ScrollArea className="h-[calc(100vh-13rem)]">
               <div className="space-y-6 p-6">
+                {interesses.length > 0 && (
+                  <Bloco titulo="Temas de interesse">
+                    <div className="flex flex-wrap gap-1.5">
+                      {interesses.map((t) => (
+                        <TemaBadge key={t}>{t}</TemaBadge>
+                      ))}
+                    </div>
+                  </Bloco>
+                )}
+                {contrarios.length > 0 && (
+                  <Bloco titulo="Temas contrários">
+                    <div className="flex flex-wrap gap-1.5">
+                      {contrarios.map((t) => (
+                        <TemaBadge key={t} tipo="contrario">
+                          {t}
+                        </TemaBadge>
+                      ))}
+                    </div>
+                  </Bloco>
+                )}
                 {setoresDe(parlamentar).length > 0 && (
                   <Bloco titulo="Setores">
                     <div className="flex flex-wrap gap-1.5">
                       {setoresDe(parlamentar).map((s) => (
-                        <Badge key={s} variant="secondary">
+                        <Badge key={s} variant="secondary" className="font-normal">
                           {s}
                         </Badge>
                       ))}
                     </div>
                   </Bloco>
                 )}
-                {parlamentar.interesses && <Bloco titulo="Interesses">{parlamentar.interesses}</Bloco>}
-                {parlamentar.descricao && <Bloco titulo="Breve descrição">{parlamentar.descricao}</Bloco>}
+                {(parlamentar.descricao || parlamentar.frentes || parlamentar.grupos) && (
+                  <Bloco titulo="Atuação">
+                    <div className="space-y-2">
+                      {parlamentar.descricao && <p>{parlamentar.descricao}</p>}
+                      {parlamentar.frentes && (
+                        <p>
+                          <span className="text-muted-foreground">Frentes parlamentares: </span>
+                          {parlamentar.frentes}
+                        </p>
+                      )}
+                      {parlamentar.grupos && (
+                        <p>
+                          <span className="text-muted-foreground">Grupos de trabalho: </span>
+                          {parlamentar.grupos}
+                        </p>
+                      )}
+                    </div>
+                  </Bloco>
+                )}
                 {proposicoes.length > 0 && (
                   <Bloco titulo="Proposições">
                     <ul className="space-y-1.5">
-                      {proposicoes.map((p) => (
-                        <li key={p} className="rounded-md border border-border bg-muted/40 px-3 py-2">
-                          {p}
-                        </li>
-                      ))}
+                      {proposicoes.map((p) => {
+                        const url = linkDe(p);
+                        return (
+                          <li key={p} className="rounded-md border border-border bg-muted/40 px-3 py-2">
+                            <span>{url ? p.replace(url, "").trim() || p : p}</span>
+                            {url && (
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1 flex items-center gap-1 text-xs text-primary hover:underline"
+                              >
+                                <ExternalLink className="h-3 w-3" /> Abrir proposição
+                              </a>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </Bloco>
                 )}
