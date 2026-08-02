@@ -82,23 +82,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Perfis Parlamentares — RelMeg" },
+      { title: "RelMeg — Inteligência Legislativa" },
       {
         name: "description",
         content:
-          "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente.",
+          "Plataforma de inteligência legislativa para Relações Governamentais: catálogo, filtros e dashboards de parlamentares.",
       },
-      { property: "og:title", content: "Perfis Parlamentares — RelMeg" },
+      { property: "og:title", content: "RelMeg — Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente.",
+        content: "Catálogo analítico de parlamentares para times de Relações Governamentais.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Perfis Parlamentares — RelMeg" },
-      { name: "twitter:description", content: "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QCEVnWQ4BNh736whgaGJZMkViVV2/social-images/social-1785698623452-social-image.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QCEVnWQ4BNh736whgaGJZMkViVV2/social-images/social-1785698623452-social-image.webp" },
     ],
     links: [
       {
@@ -111,6 +107,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
       },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,

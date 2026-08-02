@@ -14,10 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { clearData, resetTextos, setAuth, setData, setTexto, useRelmeg } from "@/lib/relmeg/store";
-import { OBRIGATORIOS, CAMPOS, temasContrariosDe, temasInteresseDe, setoresDe, type Parlamentar } from "@/lib/relmeg/types";
-import { CAMPOS_TEXTO } from "@/lib/relmeg/textos";
+import { clearData, setAuth, setData, useRelmeg } from "@/lib/relmeg/store";
+import { OBRIGATORIOS, CAMPOS, type Parlamentar } from "@/lib/relmeg/types";
 import type { ParseResult } from "@/lib/relmeg/parse";
 
 export const Route = createFileRoute("/admin")({
@@ -36,7 +34,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 function Painel() {
-  const { data, textos } = useRelmeg();
+  const { data } = useRelmeg();
   const [preview, setPreview] = useState<ParseResult | null>(null);
   const [carregando, setCarregando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -157,9 +155,7 @@ function Painel() {
               </div>
               {faltandoObrigatorio.length > 0 && (
                 <p className="mt-2 text-xs text-destructive">
-                  Campos obrigatórios ausentes: {faltandoObrigatorio
-                    .map((k) => CAMPOS.find((c) => c.key === k)?.label)
-                    .join(", ")}. Ajuste a planilha para continuar.
+                  Campos obrigatórios ausentes (Nome, Partido, UF e Cargo). Ajuste a planilha para continuar.
                 </p>
               )}
             </div>
@@ -194,41 +190,6 @@ function Painel() {
           </div>
         )}
       </div>
-
-      <div className="panel panel-hover rounded-xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-display text-base font-semibold">Textos da plataforma</h2>
-            <p className="text-sm text-muted-foreground">
-              Edite títulos, descrições e conteúdos institucionais exibidos nas páginas.
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => { resetTextos(); toast.success("Textos restaurados"); }}>
-            Restaurar padrão
-          </Button>
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {CAMPOS_TEXTO.map((campo) => (
-            <div key={campo.key} className="space-y-1.5">
-              <Label htmlFor={campo.key}>{campo.label}</Label>
-              {campo.multiline ? (
-                <Textarea
-                  id={campo.key}
-                  rows={3}
-                  value={textos[campo.key]}
-                  onChange={(e) => setTexto(campo.key, e.target.value)}
-                />
-              ) : (
-                <Input
-                  id={campo.key}
-                  value={textos[campo.key]}
-                  onChange={(e) => setTexto(campo.key, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -243,9 +204,8 @@ function Tabela({ rows }: { rows: Parlamentar[] }) {
             <TableHead>Partido</TableHead>
             <TableHead>UF</TableHead>
             <TableHead>Cargo</TableHead>
-            <TableHead>Temas de interesse</TableHead>
-            <TableHead>Temas contrários</TableHead>
-            <TableHead>Setores</TableHead>
+            <TableHead>Termômetro</TableHead>
+            <TableHead>Setor 1</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -255,9 +215,8 @@ function Tabela({ rows }: { rows: Parlamentar[] }) {
               <TableCell>{p.partido}</TableCell>
               <TableCell>{p.uf}</TableCell>
               <TableCell>{p.cargo}</TableCell>
-              <TableCell className="text-success">{temasInteresseDe(p).join(", ") || "—"}</TableCell>
-              <TableCell className="text-destructive">{temasContrariosDe(p).join(", ") || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{setoresDe(p).join(", ") || "—"}</TableCell>
+              <TableCell>{p.termometro}</TableCell>
+              <TableCell>{p.setor1}</TableCell>
             </TableRow>
           ))}
         </TableBody>

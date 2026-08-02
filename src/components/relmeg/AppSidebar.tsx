@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Users, BarChart3, LifeBuoy, ShieldCheck } from "lucide-react";
+import { LayoutGrid, BarChart3, LifeBuoy, ShieldCheck } from "lucide-react";
 import { LogoLockup } from "./Logo";
 import {
   Sidebar,
@@ -17,7 +17,7 @@ import {
 import { useRelmeg } from "@/lib/relmeg/store";
 
 const items = [
-  { title: "Perfis", url: "/", icon: Users },
+  { title: "Catálogo", url: "/", icon: LayoutGrid },
   { title: "Dashboards", url: "/dashboards", icon: BarChart3 },
   { title: "Central de Ajuda", url: "/ajuda", icon: LifeBuoy },
   { title: "Admin", url: "/admin", icon: ShieldCheck },
