@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Perfis Parlamentares — RelMeg" },
       {
         property: "og:description",
-        content: "Inteligência legislativa: temas de interesse, temas contrários, setores e perfis analíticos.",
+        content: "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

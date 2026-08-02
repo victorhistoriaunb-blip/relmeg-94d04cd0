@@ -82,23 +82,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RelMeg - Inteligência Legislativa" },
+      { title: "Perfis Parlamentares — RelMeg" },
       {
         name: "description",
         content:
-          "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
+          "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente.",
       },
-      { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
+      { property: "og:title", content: "Perfis Parlamentares — RelMeg" },
       {
         property: "og:description",
-        content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
+        content: "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "RelMeg - Inteligência Legislativa" },
-      { name: "twitter:description", content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5e4aa33b-3230-4b85-936f-8ce80cf99a17/id-preview-8e352ddc--d42e0e31-67ed-4d1f-bba3-8bd78c1c27f7.lovable.app-1785546738514.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5e4aa33b-3230-4b85-936f-8ce80cf99a17/id-preview-8e352ddc--d42e0e31-67ed-4d1f-bba3-8bd78c1c27f7.lovable.app-1785546738514.png" },
+      { name: "twitter:title", content: "Perfis Parlamentares — RelMeg" },
+      { name: "twitter:description", content: "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QCEVnWQ4BNh736whgaGJZMkViVV2/social-images/social-1785698623452-social-image.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QCEVnWQ4BNh736whgaGJZMkViVV2/social-images/social-1785698623452-social-image.webp" },
     ],
     links: [
       {
@@ -111,7 +111,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
