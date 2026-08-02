@@ -14,8 +14,14 @@ import {
 import { KpiCards } from "@/components/relmeg/KpiCards";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
-import { useRelmeg } from "@/lib/relmeg/store";
-import { setoresDe, type Parlamentar } from "@/lib/relmeg/types";
+import { toggleFilter, useRelmeg } from "@/lib/relmeg/store";
+import {
+  setoresDe,
+  temasContrariosDe,
+  temasInteresseDe,
+  type Filters,
+  type Parlamentar,
+} from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -23,42 +29,52 @@ export const Route = createFileRoute("/dashboards")({
       { title: "Dashboards Analíticos — RelMeg" },
       {
         name: "description",
-        content: "Distribuição de parlamentares por UF, partido, cargo, setor e termômetro em gráficos interativos.",
+        content:
+          "Distribuição de parlamentares por UF, partido, cargo, setor, temas de interesse e temas contrários.",
       },
       { property: "og:title", content: "Dashboards Analíticos — RelMeg" },
-      { property: "og:description", content: "Visualize sua base parlamentar em indicadores e gráficos dinâmicos." },
+      { property: "og:description", content: "Visualize apoios e resistências da sua base parlamentar." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Dashboards,
 });
 
 const CORES = [
-  "oklch(0.68 0.18 255)",
-  "oklch(0.75 0.14 215)",
-  "oklch(0.72 0.15 195)",
-  "oklch(0.62 0.19 285)",
-  "oklch(0.8 0.11 235)",
+  "#4f9dff",
+  "#56c3e8",
+  "#45cfcd",
+  "#8b7bff",
+  "#a9cdff",
 ];
+const VERDE = "#34d399";
+const VERMELHO = "#f87171";
 
 function contar(values: string[], limite = 0) {
   const counts = new Map<string, number>();
-  values.map((v) => v.trim()).filter(Boolean).forEach((v) => counts.set(v, (counts.get(v) ?? 0) + 1));
+  values
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((v) => counts.set(v, (counts.get(v) ?? 0) + 1));
   const list = [...counts.entries()]
     .map(([name, total]) => ({ name, total }))
     .sort((a, b) => b.total - a.total);
   return limite ? list.slice(0, limite) : list;
 }
 
-const EIXO = "oklch(0.715 0.03 258)";
-const REALCE = "oklch(0.3 0.055 258)";
+const EIXO = "#b7c2d6";
+const REALCE = "#2b3a55";
 
 const tooltipStyle = {
-  backgroundColor: "oklch(0.198 0.038 264)",
-  border: "1px solid oklch(0.305 0.04 262)",
+  backgroundColor: "#16203a",
+  border: "1px solid #37456b",
   borderRadius: 8,
-  color: "oklch(0.965 0.008 250)",
+  color: "#eef3ff",
   fontSize: 12,
 };
+const tooltipItemStyle = { color: "#eef3ff" };
+const tooltipLabelStyle = { color: "#c9d5ec", fontWeight: 600 };
 
 function Painel({
   titulo,
@@ -83,13 +99,13 @@ function Painel({
 }
 
 function Dashboards() {
-  const { data, filters } = useRelmeg();
+  const { data, filters, textos } = useRelmeg();
   const filtrados: Parlamentar[] = aplicarFiltros(data, filters);
 
   if (data.length === 0) {
     return (
       <div className="space-y-6">
-        <Titulo />
+        <Titulo titulo={textos.dashboardsTitulo} descricao={textos.dashboardsDescricao} />
         <EmptyState
           titulo="Sem dados para analisar"
           descricao="Os dashboards são gerados a partir da base importada. Envie uma planilha no painel Admin para visualizar os gráficos."
@@ -98,68 +114,120 @@ function Dashboards() {
     );
   }
 
+  const clique = (key: keyof Filters) => (payload: { name?: string } | undefined) => {
+    if (payload?.name) toggleFilter(key, payload.name);
+  };
+
   const porUf = contar(filtrados.map((p) => p.uf), 15);
   const porPartido = contar(filtrados.map((p) => p.partido), 8);
   const porCargo = contar(filtrados.map((p) => p.cargo));
   const porSetor = contar(filtrados.flatMap(setoresDe), 10);
-  const porTermometro = contar(filtrados.map((p) => p.termometro));
+  const porInteresse = contar(filtrados.flatMap(temasInteresseDe), 10);
+  const porContrario = contar(filtrados.flatMap(temasContrariosDe), 10);
 
   return (
     <div className="space-y-6">
-      <Titulo />
+      <Titulo titulo={textos.dashboardsTitulo} descricao={textos.dashboardsDescricao} />
       <KpiCards data={filtrados} />
       <FilterBar data={data} />
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Painel titulo="Parlamentares por UF" descricao="Top 15 unidades federativas" altura={360}>
-          <BarChart data={porUf} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <XAxis type="number" stroke={EIXO} fontSize={12} />
-            <YAxis type="category" dataKey="name" width={48} stroke={EIXO} fontSize={12} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
-            <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
+        <Painel
+          titulo="Temas de Interesse"
+          descricao="Top 10 temas com maior apoio — clique para filtrar"
+          altura={340}
+        >
+          <BarChart data={porInteresse} layout="vertical" margin={{ left: 8, right: 16 }}>
+            <XAxis type="number" stroke={EIXO} fontSize={12} allowDecimals={false} />
+            <YAxis type="category" dataKey="name" width={140} stroke={EIXO} fontSize={11} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
+              cursor={{ fill: REALCE, opacity: 0.4 }}
+            />
+            <Bar dataKey="total" fill={VERDE} radius={[0, 4, 4, 0]} cursor="pointer" onClick={clique("temaInteresse")} />
           </BarChart>
         </Painel>
 
-        <Painel titulo="Parlamentares por Partido" descricao="Top 8 partidos" altura={360}>
+        <Painel
+          titulo="Temas Contrários"
+          descricao="Top 10 temas com maior resistência — clique para filtrar"
+          altura={340}
+        >
+          <BarChart data={porContrario} layout="vertical" margin={{ left: 8, right: 16 }}>
+            <XAxis type="number" stroke={EIXO} fontSize={12} allowDecimals={false} />
+            <YAxis type="category" dataKey="name" width={140} stroke={EIXO} fontSize={11} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
+              cursor={{ fill: REALCE, opacity: 0.4 }}
+            />
+            <Bar dataKey="total" fill={VERMELHO} radius={[0, 4, 4, 0]} cursor="pointer" onClick={clique("temaContrario")} />
+          </BarChart>
+        </Painel>
+
+        <Painel titulo="Parlamentares por UF" descricao="Top 15 unidades federativas — clique para filtrar" altura={360}>
+          <BarChart data={porUf} layout="vertical" margin={{ left: 8, right: 16 }}>
+            <XAxis type="number" stroke={EIXO} fontSize={12} allowDecimals={false} />
+            <YAxis type="category" dataKey="name" width={48} stroke={EIXO} fontSize={12} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
+              cursor={{ fill: REALCE, opacity: 0.4 }}
+            />
+            <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} cursor="pointer" onClick={clique("uf")} />
+          </BarChart>
+        </Painel>
+
+        <Painel titulo="Parlamentares por Partido" descricao="Top 8 partidos — clique para filtrar" altura={360}>
           <PieChart>
-            <Pie data={porPartido} dataKey="total" nameKey="name" innerRadius={70} outerRadius={110} paddingAngle={2}>
+            <Pie
+              data={porPartido}
+              dataKey="total"
+              nameKey="name"
+              innerRadius={70}
+              outerRadius={110}
+              paddingAngle={2}
+              cursor="pointer"
+              onClick={clique("partido")}
+            >
               {porPartido.map((entry, i) => (
-                <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="oklch(0.235 0.021 259)" />
+                <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="#151d33" />
               ))}
             </Pie>
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Tooltip contentStyle={tooltipStyle} />
+            <Legend wrapperStyle={{ fontSize: 12, color: "#dbe4f5" }} />
+            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
           </PieChart>
         </Painel>
 
-        <Painel titulo="Parlamentares por Cargo" descricao="Composição da base por função">
+        <Painel titulo="Parlamentares por Cargo" descricao="Composição da base por função — clique para filtrar">
           <BarChart data={porCargo}>
             <XAxis dataKey="name" stroke={EIXO} fontSize={12} />
             <YAxis stroke={EIXO} fontSize={12} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
-            <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
+              cursor={{ fill: REALCE, opacity: 0.4 }}
+            />
+            <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} cursor="pointer" onClick={clique("cargo")} />
           </BarChart>
         </Painel>
 
-        <Painel titulo="Parlamentares por Setor" descricao="Top 10 setores de interesse">
+        <Painel titulo="Parlamentares por Setor" descricao="Top 10 setores de atuação — clique para filtrar">
           <BarChart data={porSetor}>
             <XAxis dataKey="name" stroke={EIXO} fontSize={11} interval={0} angle={-20} height={56} textAnchor="end" />
             <YAxis stroke={EIXO} fontSize={12} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
-            <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </Painel>
-
-        <Painel titulo="Parlamentares por Termômetro" descricao="Comparativo de posicionamento" altura={300}>
-          <BarChart data={porTermometro}>
-            <XAxis dataKey="name" stroke={EIXO} fontSize={12} />
-            <YAxis stroke={EIXO} fontSize={12} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.4 }} />
-            <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-              {porTermometro.map((entry, i) => (
-                <Cell key={entry.name} fill={CORES[i % CORES.length]} />
-              ))}
-            </Bar>
+            <Tooltip
+              contentStyle={tooltipStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
+              cursor={{ fill: REALCE, opacity: 0.4 }}
+            />
+            <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} cursor="pointer" onClick={clique("setor")} />
           </BarChart>
         </Painel>
       </div>
@@ -167,13 +235,11 @@ function Dashboards() {
   );
 }
 
-function Titulo() {
+function Titulo({ titulo, descricao }: { titulo: string; descricao: string }) {
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold">Dashboards</h1>
-      <p className="text-sm text-muted-foreground">
-        Análises geradas automaticamente a partir da base importada.
-      </p>
+      <h1 className="font-display text-2xl font-semibold">{titulo}</h1>
+      <p className="text-sm text-muted-foreground">{descricao}</p>
     </div>
   );
 }

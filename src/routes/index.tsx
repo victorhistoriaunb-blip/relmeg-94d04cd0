@@ -15,30 +15,38 @@ import { KpiCards } from "@/components/relmeg/KpiCards";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
 import { DetailPanel } from "@/components/relmeg/DetailPanel";
-import { TermometroBadge } from "@/components/relmeg/TermometroBadge";
+import { TemaBadge } from "@/components/relmeg/TemaBadge";
 import { useRelmeg } from "@/lib/relmeg/store";
-import { setoresDe, type Parlamentar } from "@/lib/relmeg/types";
+import {
+  setoresDe,
+  temasContrariosDe,
+  temasInteresseDe,
+  type Parlamentar,
+} from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "RelMeg - Inteligência Legislativa" },
+      { title: "Perfis Parlamentares — RelMeg" },
       {
         name: "description",
-        content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
+        content:
+          "Encontre parlamentares por tema estratégico e identifique apoios e resistências às pautas do seu cliente.",
       },
-      { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
+      { property: "og:title", content: "Perfis Parlamentares — RelMeg" },
       {
         property: "og:description",
-        content: "Catálogo analítico de parlamentares com filtros por partido, UF, cargo, setor e termômetro.",
+        content: "Inteligência legislativa: temas de interesse, temas contrários, setores e perfis analíticos.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: Catalogo,
+  component: Perfis,
 });
 
-function Catalogo() {
-  const { data, filters } = useRelmeg();
+function Perfis() {
+  const { data, filters, textos } = useRelmeg();
   const [view, setView] = useState<"cards" | "tabela">("cards");
   const [selecionado, setSelecionado] = useState<Parlamentar | null>(null);
   const filtrados = aplicarFiltros(data, filters);
@@ -46,10 +54,10 @@ function Catalogo() {
   if (data.length === 0) {
     return (
       <div className="space-y-6">
-        <Cabecalho />
+        <Cabecalho titulo={textos.perfisTitulo} descricao={textos.perfisDescricao} />
         <EmptyState
           titulo="Nenhuma base carregada"
-          descricao="Importe uma planilha Excel (.xlsx) ou CSV no painel Admin para gerar o catálogo, os indicadores e os dashboards."
+          descricao="Importe uma planilha Excel (.xlsx) ou CSV no painel Admin para gerar os perfis, os indicadores e os dashboards."
         />
       </div>
     );
@@ -57,7 +65,7 @@ function Catalogo() {
 
   return (
     <div className="space-y-6">
-      <Cabecalho />
+      <Cabecalho titulo={textos.perfisTitulo} descricao={textos.perfisDescricao} />
       <KpiCards data={filtrados} />
       <FilterBar data={data} />
 
@@ -66,18 +74,10 @@ function Catalogo() {
           {filtrados.length} de {data.length} parlamentares
         </p>
         <div className="flex gap-1 rounded-md border border-border p-1">
-          <Button
-            size="sm"
-            variant={view === "cards" ? "secondary" : "ghost"}
-            onClick={() => setView("cards")}
-          >
+          <Button size="sm" variant={view === "cards" ? "secondary" : "ghost"} onClick={() => setView("cards")}>
             <LayoutGrid className="h-4 w-4" /> Cards
           </Button>
-          <Button
-            size="sm"
-            variant={view === "tabela" ? "secondary" : "ghost"}
-            onClick={() => setView("tabela")}
-          >
+          <Button size="sm" variant={view === "tabela" ? "secondary" : "ghost"} onClick={() => setView("tabela")}>
             <Rows3 className="h-4 w-4" /> Tabela
           </Button>
         </div>
@@ -96,13 +96,26 @@ function Catalogo() {
               className="panel panel-hover rise-in rounded-xl p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50"
               style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-display text-base font-semibold leading-tight">{p.nome}</h3>
-                <TermometroBadge value={p.termometro} />
-              </div>
+              <h3 className="font-display text-base font-semibold leading-tight">{p.nome}</h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 {[p.cargo, [p.partido, p.uf].filter(Boolean).join("/")].filter(Boolean).join(" • ")}
               </p>
+              {temasInteresseDe(p).length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {temasInteresseDe(p).map((t) => (
+                    <TemaBadge key={t}>{t}</TemaBadge>
+                  ))}
+                </div>
+              )}
+              {temasContrariosDe(p).length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {temasContrariosDe(p).map((t) => (
+                    <TemaBadge key={t} tipo="contrario">
+                      {t}
+                    </TemaBadge>
+                  ))}
+                </div>
+              )}
               {setoresDe(p).length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {setoresDe(p).map((s) => (
@@ -112,40 +125,40 @@ function Catalogo() {
                   ))}
                 </div>
               )}
-              {p.descricao && (
-                <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{p.descricao}</p>
-              )}
+              {p.descricao && <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{p.descricao}</p>}
             </button>
           ))}
         </div>
       ) : (
         <div className="panel overflow-hidden rounded-xl">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Partido</TableHead>
-                <TableHead>UF</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Termômetro</TableHead>
-                <TableHead>Setores</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtrados.map((p) => (
-                <TableRow key={p.id} className="cursor-pointer" onClick={() => setSelecionado(p)}>
-                  <TableCell className="font-medium">{p.nome}</TableCell>
-                  <TableCell>{p.partido}</TableCell>
-                  <TableCell>{p.uf}</TableCell>
-                  <TableCell>{p.cargo}</TableCell>
-                  <TableCell>
-                    <TermometroBadge value={p.termometro} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{setoresDe(p).join(", ")}</TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Partido</TableHead>
+                  <TableHead>UF</TableHead>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead>Temas de interesse</TableHead>
+                  <TableHead>Temas contrários</TableHead>
+                  <TableHead>Setores</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtrados.map((p) => (
+                  <TableRow key={p.id} className="cursor-pointer" onClick={() => setSelecionado(p)}>
+                    <TableCell className="font-medium">{p.nome}</TableCell>
+                    <TableCell>{p.partido}</TableCell>
+                    <TableCell>{p.uf}</TableCell>
+                    <TableCell>{p.cargo}</TableCell>
+                    <TableCell className="text-success">{temasInteresseDe(p).join(", ") || "—"}</TableCell>
+                    <TableCell className="text-destructive">{temasContrariosDe(p).join(", ") || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{setoresDe(p).join(", ") || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
@@ -154,13 +167,11 @@ function Catalogo() {
   );
 }
 
-function Cabecalho() {
+function Cabecalho({ titulo, descricao }: { titulo: string; descricao: string }) {
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold">Catálogo</h1>
-      <p className="text-sm text-muted-foreground">
-        Base parlamentar organizada para inteligência de Relações Governamentais.
-      </p>
+      <h1 className="font-display text-2xl font-semibold">{titulo}</h1>
+      <p className="text-sm text-muted-foreground">{descricao}</p>
     </div>
   );
 }
