@@ -42,14 +42,14 @@ export const Route = createFileRoute("/dashboards")({
 });
 
 const CORES = [
-  "oklch(0.7 0.17 250)",
-  "oklch(0.78 0.13 215)",
-  "oklch(0.76 0.15 190)",
-  "oklch(0.68 0.18 285)",
-  "oklch(0.84 0.1 235)",
+  "#4f9dff",
+  "#56c3e8",
+  "#45cfcd",
+  "#8b7bff",
+  "#a9cdff",
 ];
-const VERDE = "oklch(0.75 0.16 155)";
-const VERMELHO = "oklch(0.7 0.19 22)";
+const VERDE = "#34d399";
+const VERMELHO = "#f87171";
 
 function contar(values: string[], limite = 0) {
   const counts = new Map<string, number>();
@@ -63,18 +63,18 @@ function contar(values: string[], limite = 0) {
   return limite ? list.slice(0, limite) : list;
 }
 
-const EIXO = "oklch(0.82 0.02 258)";
-const REALCE = "oklch(0.38 0.055 258)";
+const EIXO = "#b7c2d6";
+const REALCE = "#2b3a55";
 
 const tooltipStyle = {
-  backgroundColor: "oklch(0.22 0.038 264)",
-  border: "1px solid oklch(0.42 0.05 262)",
+  backgroundColor: "#16203a",
+  border: "1px solid #37456b",
   borderRadius: 8,
-  color: "oklch(0.98 0.008 250)",
+  color: "#eef3ff",
   fontSize: 12,
 };
-const tooltipItemStyle = { color: "oklch(0.98 0.008 250)" };
-const tooltipLabelStyle = { color: "oklch(0.86 0.02 250)", fontWeight: 600 };
+const tooltipItemStyle = { color: "#eef3ff" };
+const tooltipLabelStyle = { color: "#c9d5ec", fontWeight: 600 };
 
 function Painel({
   titulo,
@@ -195,10 +195,10 @@ function Dashboards() {
               onClick={clique("partido")}
             >
               {porPartido.map((entry, i) => (
-                <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="oklch(0.235 0.021 259)" />
+                <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="#151d33" />
               ))}
             </Pie>
-            <Legend wrapperStyle={{ fontSize: 12, color: "oklch(0.92 0.01 250)" }} />
+            <Legend wrapperStyle={{ fontSize: 12, color: "#dbe4f5" }} />
             <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
           </PieChart>
         </Painel>
