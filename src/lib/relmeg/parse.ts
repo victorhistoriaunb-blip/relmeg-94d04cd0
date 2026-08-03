@@ -8,6 +8,27 @@ export type ParseResult = {
   faltantes: string[];
 };
 
+const URL_RE = /(https?:\/\/\S+)/i;
+
+function extrair(valor: string, link: string) {
+  let numero = valor.trim();
+  let ementa = "";
+  let url = link.trim();
+  if (!url) {
+    const achado = numero.match(URL_RE);
+    if (achado) {
+      url = achado[1];
+      numero = numero.replace(achado[1], "").trim();
+    }
+  }
+  const partes = numero.split(/\s*[|–—]\s*|\s+-\s+/);
+  if (partes.length > 1) {
+    numero = partes[0].trim();
+    ementa = partes.slice(1).join(" — ").trim();
+  }
+  return { numero: numero.replace(/[|–—-]\s*$/, "").trim(), ementa, url };
+}
+
 export async function parseFile(file: File): Promise<ParseResult> {
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array", raw: false });
@@ -30,21 +51,32 @@ export async function parseFile(file: File): Promise<ParseResult> {
         const header = map.get(key);
         return header ? String(row[header] ?? "").trim() : "";
       };
+      const p1 = extrair(get("proposicao1"), get("link1"));
+      const p2 = extrair(get("proposicao2"), get("link2"));
+      const p3 = extrair(get("proposicao3"), get("link3"));
       const item: Parlamentar = {
         id: `${index}-${get("nome") || "sem-nome"}`,
         nome: get("nome"),
         partido: get("partido"),
         uf: get("uf").toUpperCase(),
         cargo: get("cargo"),
-        termometro: get("termometro"),
-        interesses: get("interesses"),
+        interesse1: get("interesse1"),
+        interesse2: get("interesse2"),
+        contrario1: get("contrario1"),
+        contrario2: get("contrario2"),
         setor1: get("setor1"),
         setor2: get("setor2"),
         setor3: get("setor3"),
         descricao: get("descricao"),
-        proposicao1: get("proposicao1"),
-        proposicao2: get("proposicao2"),
-        proposicao3: get("proposicao3"),
+        proposicao1: p1.numero,
+        ementa1: get("ementa1") || p1.ementa,
+        link1: p1.url,
+        proposicao2: p2.numero,
+        ementa2: get("ementa2") || p2.ementa,
+        link2: p2.url,
+        proposicao3: p3.numero,
+        ementa3: get("ementa3") || p3.ementa,
+        link3: p3.url,
         anotacoes: get("anotacoes"),
       };
       return item;
