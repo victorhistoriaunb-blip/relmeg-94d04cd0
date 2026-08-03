@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, Download, Trash2, LogOut, UploadCloud } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Download, Trash2, LogOut, UploadCloud, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -14,8 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { clearData, setAuth, setData, useRelmeg } from "@/lib/relmeg/store";
-import { OBRIGATORIOS, CAMPOS, type Parlamentar } from "@/lib/relmeg/types";
+import { clearData, resetTextos, setAuth, setData, setTexto, useRelmeg } from "@/lib/relmeg/store";
+import { CAMPOS_TEXTO } from "@/lib/relmeg/textos";
+import {
+  OBRIGATORIOS,
+  setoresDe,
+  temasContrariosDe,
+  temasInteresseDe,
+  type Parlamentar,
+} from "@/lib/relmeg/types";
 import type { ParseResult } from "@/lib/relmeg/parse";
 
 export const Route = createFileRoute("/admin")({
@@ -24,17 +32,19 @@ export const Route = createFileRoute("/admin")({
       { title: "Admin — Importação de Base | RelMeg" },
       {
         name: "description",
-        content: "Painel administrativo do RelMeg para importar planilhas Excel/CSV e gerenciar a base parlamentar.",
+        content: "Painel administrativo do RelMeg para importar planilhas, conferir dados e editar textos da plataforma.",
       },
       { property: "og:title", content: "Admin — Importação de Base | RelMeg" },
       { property: "og:description", content: "Importe, valide e gerencie sua base de parlamentares." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Painel,
 });
 
 function Painel() {
-  const { data } = useRelmeg();
+  const { data, textos } = useRelmeg();
   const [preview, setPreview] = useState<ParseResult | null>(null);
   const [carregando, setCarregando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +56,7 @@ function Painel() {
       const { parseFile } = await import("@/lib/relmeg/parse");
       const resultado = await parseFile(file);
       if (resultado.rows.length === 0) {
-        toast.error("Nenhuma linha válida encontrada. Verifique a coluna 'Nome do Parlamentar'.");
+        toast.error("Nenhuma linha válida encontrada. Verifique a coluna 'Nome'.");
         setPreview(null);
       } else {
         setPreview(resultado);
@@ -68,7 +78,7 @@ function Painel() {
   }
 
   const faltandoObrigatorio = preview
-    ? OBRIGATORIOS.filter((k) => preview.faltantes.includes(CAMPOS.find((c) => c.key === k)?.label ?? ""))
+    ? OBRIGATORIOS.filter((c) => preview.faltantes.includes(c.label)).map((c) => c.label)
     : [];
 
   return (
@@ -76,7 +86,9 @@ function Painel() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold">Admin</h1>
-          <p className="text-sm text-muted-foreground">Importação e gestão da base parlamentar.</p>
+          <p className="text-sm text-muted-foreground">
+            Importação da base, conferência dos dados e edição dos textos da plataforma.
+          </p>
         </div>
         <Button variant="ghost" onClick={() => setAuth(false)}>
           <LogOut className="h-4 w-4" /> Sair
@@ -107,13 +119,20 @@ function Painel() {
           </Button>
           {carregando && <span className="text-sm text-muted-foreground">Lendo arquivo…</span>}
         </div>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {OBRIGATORIOS.map((c) => (
+            <Badge key={c.key} variant="outline" className="border-primary/40 font-normal text-primary">
+              {c.label} *
+            </Badge>
+          ))}
+        </div>
       </div>
 
       {preview && (
         <div className="panel rise-in space-y-4 rounded-xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-base font-semibold">
-              Pré-visualização — {preview.rows.length} registros
+              Conferência — {preview.rows.length} registros
             </h2>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => setPreview(null)}>
@@ -155,7 +174,7 @@ function Painel() {
               </div>
               {faltandoObrigatorio.length > 0 && (
                 <p className="mt-2 text-xs text-destructive">
-                  Campos obrigatórios ausentes (Nome, Partido, UF e Cargo). Ajuste a planilha para continuar.
+                  Campos obrigatórios ausentes: {faltandoObrigatorio.join(", ")}. Ajuste a planilha para continuar.
                 </p>
               )}
             </div>
@@ -190,6 +209,47 @@ function Painel() {
           </div>
         )}
       </div>
+
+      <div className="panel panel-hover rounded-xl p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-base font-semibold">Textos da plataforma</h2>
+            <p className="text-sm text-muted-foreground">
+              Personalize os títulos e descrições exibidos nas páginas.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetTextos();
+              toast.success("Textos restaurados");
+            }}
+          >
+            <RotateCcw className="h-4 w-4" /> Restaurar padrão
+          </Button>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {CAMPOS_TEXTO.map((campo) => (
+            <div key={campo.key} className="space-y-1.5">
+              <Label htmlFor={campo.key}>{campo.label}</Label>
+              {campo.multi ? (
+                <Textarea
+                  id={campo.key}
+                  rows={2}
+                  value={textos[campo.key]}
+                  onChange={(e) => setTexto(campo.key, e.target.value)}
+                />
+              ) : (
+                <Input
+                  id={campo.key}
+                  value={textos[campo.key]}
+                  onChange={(e) => setTexto(campo.key, e.target.value)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -199,24 +259,26 @@ function Tabela({ rows }: { rows: Parlamentar[] }) {
     <div className="overflow-x-auto rounded-md border border-border">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Partido</TableHead>
-            <TableHead>UF</TableHead>
-            <TableHead>Cargo</TableHead>
-            <TableHead>Termômetro</TableHead>
-            <TableHead>Setor 1</TableHead>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="text-foreground">Nome</TableHead>
+            <TableHead className="text-foreground">Partido</TableHead>
+            <TableHead className="text-foreground">UF</TableHead>
+            <TableHead className="text-foreground">Cargo</TableHead>
+            <TableHead className="text-foreground">Temas de Interesse</TableHead>
+            <TableHead className="text-foreground">Temas Contrários</TableHead>
+            <TableHead className="text-foreground">Setores</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((p) => (
             <TableRow key={p.id}>
-              <TableCell className="font-medium">{p.nome}</TableCell>
-              <TableCell>{p.partido}</TableCell>
-              <TableCell>{p.uf}</TableCell>
-              <TableCell>{p.cargo}</TableCell>
-              <TableCell>{p.termometro}</TableCell>
-              <TableCell>{p.setor1}</TableCell>
+              <TableCell className="font-medium text-foreground">{p.nome}</TableCell>
+              <TableCell className="text-foreground/90">{p.partido}</TableCell>
+              <TableCell className="text-foreground/90">{p.uf}</TableCell>
+              <TableCell className="text-foreground/90">{p.cargo}</TableCell>
+              <TableCell className="text-success">{temasInteresseDe(p).join(", ") || "—"}</TableCell>
+              <TableCell className="text-destructive">{temasContrariosDe(p).join(", ") || "—"}</TableCell>
+              <TableCell className="text-foreground/80">{setoresDe(p).join(", ") || "—"}</TableCell>
             </TableRow>
           ))}
         </TableBody>

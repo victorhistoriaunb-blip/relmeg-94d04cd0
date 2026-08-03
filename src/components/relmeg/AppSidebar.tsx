@@ -17,7 +17,7 @@ import {
 import { useRelmeg } from "@/lib/relmeg/store";
 
 const items = [
-  { title: "Catálogo", url: "/", icon: LayoutGrid },
+  { title: "Perfis", url: "/", icon: LayoutGrid },
   { title: "Dashboards", url: "/dashboards", icon: BarChart3 },
   { title: "Central de Ajuda", url: "/ajuda", icon: LifeBuoy },
   { title: "Admin", url: "/admin", icon: ShieldCheck },
