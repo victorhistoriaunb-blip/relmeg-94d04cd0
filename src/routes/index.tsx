@@ -21,16 +21,16 @@ import { setoresDe, temasContrariosDe, temasInteresseDe, type Parlamentar } from
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Perfis de Parlamentares — RelMeg" },
+      { title: "RelMeg - Inteligência Legislativa" },
       {
         name: "description",
         content:
           "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários.",
       },
-      { property: "og:title", content: "Perfis de Parlamentares — RelMeg" },
+      { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Organize e consulte sua base parlamentar com filtros inteligentes e briefings prontos.",
+        content: "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

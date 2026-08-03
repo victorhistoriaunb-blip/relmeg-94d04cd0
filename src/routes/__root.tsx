@@ -82,19 +82,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RelMeg — Inteligência Legislativa" },
+      { title: "RelMeg - Inteligência Legislativa" },
       {
         name: "description",
         content:
-          "Plataforma de inteligência legislativa para Relações Governamentais: catálogo, filtros e dashboards de parlamentares.",
+          "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários.",
       },
-      { property: "og:title", content: "RelMeg — Inteligência Legislativa" },
+      { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Perfis analíticos de parlamentares para times de Relações Governamentais.",
+        content: "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "RelMeg - Inteligência Legislativa" },
+      { name: "twitter:description", content: "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5d70a014-5967-4a24-80de-2645e0a20c3f" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5d70a014-5967-4a24-80de-2645e0a20c3f" },
     ],
     links: [
       {
@@ -107,7 +111,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
