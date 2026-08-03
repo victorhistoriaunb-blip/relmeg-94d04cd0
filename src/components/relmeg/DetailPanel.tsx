@@ -1,18 +1,24 @@
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { briefing, setoresDe, type Parlamentar } from "@/lib/relmeg/types";
-import { TermometroBadge } from "./TermometroBadge";
+import {
+  briefing,
+  proposicoesDe,
+  setoresDe,
+  temasContrariosDe,
+  temasInteresseDe,
+  type Parlamentar,
+} from "@/lib/relmeg/types";
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
       <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{titulo}</h3>
-      <div className="text-sm leading-relaxed">{children}</div>
+      <div className="text-sm leading-relaxed text-foreground">{children}</div>
     </section>
   );
 }
@@ -38,9 +44,7 @@ export function DetailPanel({
     }
   }
 
-  const proposicoes = parlamentar
-    ? [parlamentar.proposicao1, parlamentar.proposicao2, parlamentar.proposicao3].filter(Boolean)
-    : [];
+  const proposicoes = parlamentar ? proposicoesDe(parlamentar) : [];
 
   return (
     <Sheet open={!!parlamentar} onOpenChange={(open) => !open && onClose()}>
@@ -54,11 +58,36 @@ export function DetailPanel({
                 <Badge variant="outline">
                   {[parlamentar.partido, parlamentar.uf].filter(Boolean).join("/") || "—"}
                 </Badge>
-                <TermometroBadge value={parlamentar.termometro} />
               </div>
             </SheetHeader>
             <ScrollArea className="h-[calc(100vh-13rem)]">
               <div className="space-y-6 p-6">
+                {temasInteresseDe(parlamentar).length > 0 && (
+                  <Bloco titulo="Temas de Interesse">
+                    <div className="flex flex-wrap gap-1.5">
+                      {temasInteresseDe(parlamentar).map((t) => (
+                        <Badge key={t} variant="outline" className="border-success/40 bg-success/15 text-success">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Bloco>
+                )}
+                {temasContrariosDe(parlamentar).length > 0 && (
+                  <Bloco titulo="Temas Contrários">
+                    <div className="flex flex-wrap gap-1.5">
+                      {temasContrariosDe(parlamentar).map((t) => (
+                        <Badge
+                          key={t}
+                          variant="outline"
+                          className="border-destructive/40 bg-destructive/15 text-destructive"
+                        >
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Bloco>
+                )}
                 {setoresDe(parlamentar).length > 0 && (
                   <Bloco titulo="Setores">
                     <div className="flex flex-wrap gap-1.5">
@@ -70,14 +99,27 @@ export function DetailPanel({
                     </div>
                   </Bloco>
                 )}
-                {parlamentar.interesses && <Bloco titulo="Interesses">{parlamentar.interesses}</Bloco>}
                 {parlamentar.descricao && <Bloco titulo="Breve descrição">{parlamentar.descricao}</Bloco>}
                 {proposicoes.length > 0 && (
                   <Bloco titulo="Proposições">
-                    <ul className="space-y-1.5">
-                      {proposicoes.map((p) => (
-                        <li key={p} className="rounded-md border border-border bg-muted/40 px-3 py-2">
-                          {p}
+                    <ul className="space-y-2">
+                      {proposicoes.map((p, i) => (
+                        <li
+                          key={`${p.numero}-${i}`}
+                          className="rounded-md border border-border bg-muted/40 px-3 py-2"
+                        >
+                          {p.numero && <p className="font-medium">{p.numero}</p>}
+                          {p.ementa && <p className="mt-0.5 text-sm text-muted-foreground">{p.ementa}</p>}
+                          {p.link && (
+                            <a
+                              href={p.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3" /> Abrir proposição
+                            </a>
+                          )}
                         </li>
                       ))}
                     </ul>
