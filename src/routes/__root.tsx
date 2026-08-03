@@ -91,7 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "RelMeg — Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Catálogo analítico de parlamentares para times de Relações Governamentais.",
+        content: "Perfis analíticos de parlamentares para times de Relações Governamentais.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

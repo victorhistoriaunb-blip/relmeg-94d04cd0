@@ -16,14 +16,14 @@ function extrair(valor: string, link: string) {
   let url = link.trim();
   if (!url) {
     const achado = numero.match(URL_RE);
-    if (achado) {
+    if (achado?.[1]) {
       url = achado[1];
       numero = numero.replace(achado[1], "").trim();
     }
   }
   const partes = numero.split(/\s*[|–—]\s*|\s+-\s+/);
   if (partes.length > 1) {
-    numero = partes[0].trim();
+    numero = (partes[0] ?? "").trim();
     ementa = partes.slice(1).join(" — ").trim();
   }
   return { numero: numero.replace(/[|–—-]\s*$/, "").trim(), ementa, url };
