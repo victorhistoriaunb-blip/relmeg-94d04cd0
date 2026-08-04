@@ -5,25 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "./Logo";
-import { setAuth } from "@/lib/relmeg/store";
-import { validarCredenciais } from "@/lib/relmeg/auth";
+import { login as entrarNaSessao } from "@/lib/relmeg/store";
+import { autenticar } from "@/lib/relmeg/auth";
 
 export function LoginScreen() {
-  const [email, setEmail] = useState("");
+  const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
 
   function entrar(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim() || !senha) {
-      toast.error("Informe e-mail e senha");
+    if (!usuario.trim() || !senha) {
+      toast.error("Informe usuário e senha");
       return;
     }
     setCarregando(true);
     window.setTimeout(() => {
-      if (validarCredenciais(email, senha)) {
-        setAuth(true);
-        toast.success("Bem-vindo ao RelMeg");
+      const encontrado = autenticar(usuario, senha);
+      if (encontrado) {
+        entrarNaSessao({ login: encontrado.login, nome: encontrado.nome });
+        toast.success(`Bem-vindo, ${encontrado.nome}`);
       } else {
         toast.error("Credenciais inválidas");
         setCarregando(false);
@@ -47,13 +48,12 @@ export function LoginScreen() {
 
         <form onSubmit={entrar} className="panel mt-8 space-y-5 rounded-xl p-7">
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="usuario">Usuário</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
+              id="usuario"
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
+              placeholder="admin"
               autoComplete="username"
             />
           </div>

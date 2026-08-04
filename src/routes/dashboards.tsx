@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Bar,
   BarChart,
@@ -12,6 +12,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { KpiCards } from "@/components/relmeg/KpiCards";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
@@ -93,7 +95,7 @@ function Painel({
 }
 
 function Dashboards() {
-  const { data, filters, textos } = useRelmeg();
+  const { data, filters, textos, prefs } = useRelmeg();
   const filtrados: Parlamentar[] = aplicarFiltros(data, filters);
 
   const Titulo = () => (
@@ -115,54 +117,47 @@ function Dashboards() {
     );
   }
 
-  const porUf = contar(filtrados.map((p) => p.uf), 15);
-  const porPartido = contar(filtrados.map((p) => p.partido), 8);
-  const porCargo = contar(filtrados.map((p) => p.cargo));
-  const porSetor = contar(filtrados.flatMap(setoresDe), 10);
-  const porInteresse = contar(filtrados.flatMap(temasInteresseDe), 10);
-  const porContrario = contar(filtrados.flatMap(temasContrariosDe), 10);
-
-  return (
-    <div className="space-y-6">
-      <Titulo />
-      <KpiCards data={filtrados} />
-      <FilterBar data={data} />
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Painel titulo="Temas de Interesse" descricao="Top 10 temas com maior apoio" altura={360}>
-          <BarChart data={porInteresse} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <CartesianGrid horizontal={false} stroke={GRADE} />
-            <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" width={150} stroke={EIXO} tick={tick} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
-            <Bar dataKey="total" fill={VERDE} radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </Painel>
-
-        <Painel titulo="Temas Contrários" descricao="Top 10 temas com maior resistência" altura={360}>
-          <BarChart data={porContrario} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <CartesianGrid horizontal={false} stroke={GRADE} />
-            <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" width={150} stroke={EIXO} tick={tick} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
-            <Bar dataKey="total" fill={VERMELHO} radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </Painel>
-
-        <Painel titulo="Parlamentares por UF" descricao="Top 15 unidades federativas" altura={360}>
-          <BarChart data={porUf} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <CartesianGrid horizontal={false} stroke={GRADE} />
-            <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" width={48} stroke={EIXO} tick={tick} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
-            <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </Painel>
-
-        <Painel titulo="Parlamentares por Partido" descricao="Top 8 partidos" altura={360}>
+  const graficos: Record<string, (c: { titulo: string; descricao: string; limite?: number }) => React.ReactElement> = {
+    interesse: (c) => (
+      <Painel key="interesse" titulo={c.titulo} descricao={c.descricao} altura={360}>
+        <BarChart data={contar(filtrados.flatMap(temasInteresseDe), c.limite)} layout="vertical" margin={{ left: 8, right: 16 }}>
+          <CartesianGrid horizontal={false} stroke={GRADE} />
+          <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
+          <YAxis type="category" dataKey="name" width={150} stroke={EIXO} tick={tick} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Bar dataKey="total" fill={VERDE} radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </Painel>
+    ),
+    contrario: (c) => (
+      <Painel key="contrario" titulo={c.titulo} descricao={c.descricao} altura={360}>
+        <BarChart data={contar(filtrados.flatMap(temasContrariosDe), c.limite)} layout="vertical" margin={{ left: 8, right: 16 }}>
+          <CartesianGrid horizontal={false} stroke={GRADE} />
+          <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
+          <YAxis type="category" dataKey="name" width={150} stroke={EIXO} tick={tick} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Bar dataKey="total" fill={VERMELHO} radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </Painel>
+    ),
+    uf: (c) => (
+      <Painel key="uf" titulo={c.titulo} descricao={c.descricao} altura={360}>
+        <BarChart data={contar(filtrados.map((p) => p.uf), c.limite)} layout="vertical" margin={{ left: 8, right: 16 }}>
+          <CartesianGrid horizontal={false} stroke={GRADE} />
+          <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
+          <YAxis type="category" dataKey="name" width={48} stroke={EIXO} tick={tick} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </Painel>
+    ),
+    partido: (c) => {
+      const dados = contar(filtrados.map((p) => p.partido), c.limite);
+      return (
+        <Painel key="partido" titulo={c.titulo} descricao={c.descricao} altura={360}>
           <PieChart>
-            <Pie data={porPartido} dataKey="total" nameKey="name" innerRadius={70} outerRadius={110} paddingAngle={2}>
-              {porPartido.map((entry, i) => (
+            <Pie data={dados} dataKey="total" nameKey="name" innerRadius={70} outerRadius={110} paddingAngle={2}>
+              {dados.map((entry, i) => (
                 <Cell key={entry.name} fill={CORES[i % CORES.length]} stroke="oklch(0.235 0.021 259)" />
               ))}
             </Pie>
@@ -170,35 +165,62 @@ function Dashboards() {
             <Tooltip contentStyle={tooltipStyle} />
           </PieChart>
         </Painel>
+      );
+    },
+    cargo: (c) => (
+      <Painel key="cargo" titulo={c.titulo} descricao={c.descricao}>
+        <BarChart data={contar(filtrados.map((p) => p.cargo), c.limite)}>
+          <CartesianGrid vertical={false} stroke={GRADE} />
+          <XAxis dataKey="name" stroke={EIXO} tick={tick} />
+          <YAxis stroke={EIXO} tick={tick} allowDecimals={false} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </Painel>
+    ),
+    setor: (c) => (
+      <Painel key="setor" titulo={c.titulo} descricao={c.descricao}>
+        <BarChart data={contar(filtrados.flatMap(setoresDe), c.limite)} margin={{ bottom: 8 }}>
+          <CartesianGrid vertical={false} stroke={GRADE} />
+          <XAxis
+            dataKey="name"
+            stroke={EIXO}
+            tick={{ fill: EIXO, fontSize: 11 }}
+            interval={0}
+            angle={-20}
+            height={64}
+            textAnchor="end"
+          />
+          <YAxis stroke={EIXO} tick={tick} allowDecimals={false} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </Painel>
+    ),
+  };
 
-        <Painel titulo="Parlamentares por Cargo" descricao="Composição da base por função">
-          <BarChart data={porCargo}>
-            <CartesianGrid vertical={false} stroke={GRADE} />
-            <XAxis dataKey="name" stroke={EIXO} tick={tick} />
-            <YAxis stroke={EIXO} tick={tick} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
-            <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </Painel>
+  const visiveis = prefs.paineis.filter((c) => c.visivel && graficos[c.key]);
 
-        <Painel titulo="Parlamentares por Setor" descricao="Top 10 setores de atuação">
-          <BarChart data={porSetor} margin={{ bottom: 8 }}>
-            <CartesianGrid vertical={false} stroke={GRADE} />
-            <XAxis
-              dataKey="name"
-              stroke={EIXO}
-              tick={{ fill: EIXO, fontSize: 11 }}
-              interval={0}
-              angle={-20}
-              height={64}
-              textAnchor="end"
-            />
-            <YAxis stroke={EIXO} tick={tick} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
-            <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </Painel>
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <Titulo />
+        <Button asChild variant="outline" size="sm">
+          <Link to="/configuracoes">
+            <SlidersHorizontal className="h-4 w-4" /> Editar cards
+          </Link>
+        </Button>
       </div>
+      <KpiCards data={filtrados} />
+      <FilterBar data={data} />
+
+      {visiveis.length === 0 ? (
+        <div className="panel rounded-xl p-10 text-center text-sm text-muted-foreground">
+          Nenhum card visível. Ative os cards desejados em Configurações.
+        </div>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-2">{visiveis.map((c) => graficos[c.key]!(c))}</div>
+      )}
     </div>
   );
 }

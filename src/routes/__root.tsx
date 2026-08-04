@@ -15,7 +15,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/relmeg/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { LoginScreen } from "@/components/relmeg/LoginScreen";
-import { useRelmeg } from "@/lib/relmeg/store";
+import { logout, useRelmeg } from "@/lib/relmeg/store";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 function NotFoundComponent() {
   return (
@@ -135,7 +137,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const { auth } = useRelmeg();
+  const { auth, sessao, prefs } = useRelmeg();
   const [pronto, setPronto] = useState(false);
   useEffect(() => setPronto(true), []);
 
@@ -163,9 +165,17 @@ function RootComponent() {
               <span className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
                 RelMeg · Inteligência Legislativa
               </span>
-              <span className="ml-auto hidden items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs text-muted-foreground sm:flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-success" /> Sessão ativa
-              </span>
+              <div className="ml-auto flex items-center gap-2">
+                {prefs.mostrarSaudacao && (
+                  <span className="hidden items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs text-muted-foreground sm:flex">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                    {prefs.saudacao}, {prefs.nomeExibicao || sessao?.nome || "Admin"}
+                  </span>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => logout()}>
+                  <LogOut className="h-4 w-4" /> Sair
+                </Button>
+              </div>
             </header>
             <main className="flex-1 p-4 md:p-8">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
