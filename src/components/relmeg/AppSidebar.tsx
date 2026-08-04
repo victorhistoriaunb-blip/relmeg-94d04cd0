@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutGrid, BarChart3, LifeBuoy, ShieldCheck } from "lucide-react";
+import { LayoutGrid, BarChart3, LifeBuoy, ShieldCheck, Settings } from "lucide-react";
 import { LogoLockup } from "./Logo";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const items = [
   { title: "Perfis", url: "/", icon: LayoutGrid },
   { title: "Dashboards", url: "/dashboards", icon: BarChart3 },
   { title: "Central de Ajuda", url: "/ajuda", icon: LifeBuoy },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
   { title: "Admin", url: "/admin", icon: ShieldCheck },
 ] as const;
 

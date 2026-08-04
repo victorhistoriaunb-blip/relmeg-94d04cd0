@@ -40,8 +40,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Perfis() {
-  const { data, filters, textos } = useRelmeg();
-  const [view, setView] = useState<"cards" | "tabela">("cards");
+  const { data, filters, textos, prefs } = useRelmeg();
+  const [view, setView] = useState<"cards" | "tabela">(prefs.visaoPadraoPerfis);
   const [selecionado, setSelecionado] = useState<Parlamentar | null>(null);
   const filtrados = aplicarFiltros(data, filters);
 
@@ -67,7 +67,7 @@ function Perfis() {
   return (
     <div className="space-y-6">
       <Cabecalho />
-      <KpiCards data={filtrados} />
+      {prefs.mostrarKpisPerfis && <KpiCards data={filtrados} />}
       <FilterBar data={data} />
 
       <div className="flex items-center justify-between gap-3">

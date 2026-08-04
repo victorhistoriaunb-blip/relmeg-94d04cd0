@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { clearData, resetTextos, setAuth, setData, setTexto, useRelmeg } from "@/lib/relmeg/store";
+import { clearData, logout, resetTextos, setData, setTexto, useRelmeg } from "@/lib/relmeg/store";
 import { CAMPOS_TEXTO } from "@/lib/relmeg/textos";
 import {
   OBRIGATORIOS,
@@ -90,7 +90,7 @@ function Painel() {
             Importação da base, conferência dos dados e edição dos textos da plataforma.
           </p>
         </div>
-        <Button variant="ghost" onClick={() => setAuth(false)}>
+        <Button variant="ghost" onClick={() => logout()}>
           <LogOut className="h-4 w-4" /> Sair
         </Button>
       </div>
