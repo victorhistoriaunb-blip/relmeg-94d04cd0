@@ -41,7 +41,7 @@ export function alterarSenha(login: string, senhaAtual: string, novaSenha: strin
   const usuarios = lerUsuarios();
   const idx = usuarios.findIndex((u) => u.login.toLowerCase() === login.toLowerCase() && u.senha === senhaAtual);
   if (idx === -1) return false;
-  usuarios[idx] = { ...usuarios[idx], senha: novaSenha };
+  usuarios[idx] = { ...usuarios[idx]!, senha: novaSenha };
   salvarUsuarios(usuarios);
   return true;
 }

@@ -160,7 +160,10 @@ export function moverCard(grupo: "kpis" | "paineis", key: string, direcao: -1 | 
   const i = lista.findIndex((c) => c.key === key);
   const j = i + direcao;
   if (i === -1 || j < 0 || j >= lista.length) return;
-  [lista[i], lista[j]] = [lista[j], lista[i]];
+  const a = lista[i]!;
+  const b = lista[j]!;
+  lista[i] = b;
+  lista[j] = a;
   state.prefs = { ...state.prefs, [grupo]: lista };
   persistirPrefs();
 }
