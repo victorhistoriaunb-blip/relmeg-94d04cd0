@@ -17,7 +17,7 @@ export function KpiCards({ data }: { data: Parlamentar[] }) {
   const resistencia = topOf(data.flatMap(temasContrariosDe));
   const uf = topOf(data.map((p) => p.uf));
 
-  const valores: Record<string, { value: string; contagem?: number }> = {
+  const valores: Record<string, { value: string; contagem?: number | undefined }> = {
     total: { value: String(data.length) },
     apoio: { value: apoio?.[0] ?? "—", contagem: apoio?.[1] },
     resistencia: { value: resistencia?.[0] ?? "—", contagem: resistencia?.[1] },
