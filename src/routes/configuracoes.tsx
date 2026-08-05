@@ -133,7 +133,7 @@ function Configuracoes() {
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
 
-  function salvarSenha(e: React.FormEvent) {
+  async function salvarSenha(e: React.FormEvent) {
     e.preventDefault();
     if (!sessao) return;
     if (novaSenha.length < 6) {
@@ -144,7 +144,7 @@ function Configuracoes() {
       toast.error("A confirmação não confere");
       return;
     }
-    if (!alterarSenha(sessao.login, senhaAtual, novaSenha)) {
+    if (!(await alterarSenha(sessao.login, senhaAtual, novaSenha))) {
       toast.error("Senha atual incorreta");
       return;
     }

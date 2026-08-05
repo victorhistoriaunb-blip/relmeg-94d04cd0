@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { LayoutGrid, Rows3 } from "lucide-react";
+import { LayoutGrid, Rows3, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,8 +16,8 @@ import { KpiCards } from "@/components/relmeg/KpiCards";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
 import { DetailPanel } from "@/components/relmeg/DetailPanel";
-import { useRelmeg } from "@/lib/relmeg/store";
-import { setoresDe, temasContrariosDe, temasInteresseDe, type Parlamentar } from "@/lib/relmeg/types";
+import { criarParlamentar, useRelmeg } from "@/lib/relmeg/store";
+import { setoresDe, temasContrariosDe, temasInteresseDe } from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,17 +41,56 @@ export const Route = createFileRoute("/")({
 });
 
 function Perfis() {
-  const { data, filters, textos, prefs } = useRelmeg();
+  const { data, filters, textos, prefs, carregandoBase } = useRelmeg();
   const [view, setView] = useState<"cards" | "tabela">(prefs.visaoPadraoPerfis);
-  const [selecionado, setSelecionado] = useState<Parlamentar | null>(null);
+  const [selecionado, setSelecionado] = useState<string | null>(null);
+  const [novo, setNovo] = useState(false);
   const filtrados = aplicarFiltros(data, filters);
 
+  async function adicionar() {
+    try {
+      const criado = await criarParlamentar();
+      if (criado) {
+        setNovo(true);
+        setSelecionado(criado.id);
+        toast.success("Perfil criado — edite os dados no painel");
+      }
+    } catch {
+      toast.error("Não foi possível criar o perfil");
+    }
+  }
+
   const Cabecalho = () => (
-    <div>
-      <h1 className="font-display text-2xl font-semibold">{textos.perfisTitulo}</h1>
-      <p className="text-sm text-muted-foreground">{textos.perfisSubtitulo}</p>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="font-display text-xl font-semibold sm:text-2xl">{textos.perfisTitulo}</h1>
+        <p className="text-sm text-muted-foreground">{textos.perfisSubtitulo}</p>
+      </div>
+      <Button size="sm" className="shrink-0" onClick={adicionar}>
+        <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Novo perfil</span>
+      </Button>
     </div>
   );
+
+  const Painel = (
+    <DetailPanel
+      key={selecionado ?? "vazio"}
+      parlamentarId={selecionado}
+      editarAoAbrir={novo}
+      onClose={() => {
+        setSelecionado(null);
+        setNovo(false);
+      }}
+    />
+  );
+
+  if (carregandoBase && data.length === 0) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando sua base…
+      </div>
+    );
+  }
 
   if (data.length === 0) {
     return (
@@ -60,6 +100,7 @@ function Perfis() {
           titulo="Nenhuma base carregada"
           descricao="Importe uma planilha Excel (.xlsx) ou CSV no painel Admin para gerar os perfis, os indicadores e os dashboards."
         />
+        {Painel}
       </div>
     );
   }
@@ -70,7 +111,7 @@ function Perfis() {
       {prefs.mostrarKpisPerfis && <KpiCards data={filtrados} />}
       <FilterBar data={data} />
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {filtrados.length} de {data.length} parlamentares
         </p>
@@ -93,7 +134,7 @@ function Perfis() {
           {filtrados.map((p, i) => (
             <button
               key={p.id}
-              onClick={() => setSelecionado(p)}
+              onClick={() => setSelecionado(p.id)}
               className="panel panel-hover rise-in rounded-xl p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50"
               style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
             >
@@ -156,7 +197,7 @@ function Perfis() {
             </TableHeader>
             <TableBody>
               {filtrados.map((p) => (
-                <TableRow key={p.id} className="cursor-pointer" onClick={() => setSelecionado(p)}>
+                <TableRow key={p.id} className="cursor-pointer" onClick={() => setSelecionado(p.id)}>
                   <TableCell className="font-medium text-foreground">{p.nome}</TableCell>
                   <TableCell className="text-foreground/90">{p.partido}</TableCell>
                   <TableCell className="text-foreground/90">{p.uf}</TableCell>
@@ -171,7 +212,7 @@ function Perfis() {
         </div>
       )}
 
-      <DetailPanel parlamentar={selecionado} onClose={() => setSelecionado(null)} />
+      {Painel}
     </div>
   );
 }

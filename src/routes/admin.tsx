@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { clearData, logout, resetTextos, setData, setTexto, useRelmeg } from "@/lib/relmeg/store";
+import { limparBase, logout, resetTextos, substituirBase, setTexto, useRelmeg } from "@/lib/relmeg/store";
 import { CAMPOS_TEXTO } from "@/lib/relmeg/textos";
 import {
   OBRIGATORIOS,
@@ -69,12 +69,19 @@ function Painel() {
     }
   }
 
-  function confirmar() {
+  async function confirmar() {
     if (!preview) return;
-    setData(preview.rows);
-    setPreview(null);
-    if (inputRef.current) inputRef.current.value = "";
-    toast.success("Base importada com sucesso");
+    setCarregando(true);
+    try {
+      await substituirBase(preview.rows);
+      setPreview(null);
+      if (inputRef.current) inputRef.current.value = "";
+      toast.success("Base importada e salva na nuvem");
+    } catch {
+      toast.error("Não foi possível salvar a base na nuvem");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   const faltandoObrigatorio = preview
@@ -189,15 +196,19 @@ function Painel() {
           <div>
             <h2 className="font-display text-base font-semibold">Base carregada</h2>
             <p className="text-sm text-muted-foreground">
-              {data.length} parlamentares salvos localmente neste navegador.
+              {data.length} parlamentares salvos na nuvem e vinculados à sua conta.
             </p>
           </div>
           <Button
             variant="outline"
             disabled={data.length === 0}
-            onClick={() => {
-              clearData();
-              toast.success("Base removida");
+            onClick={async () => {
+              try {
+                await limparBase();
+                toast.success("Base removida");
+              } catch {
+                toast.error("Não foi possível remover a base");
+              }
             }}
           >
             <Trash2 className="h-4 w-4" /> Limpar base

@@ -15,7 +15,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/relmeg/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { LoginScreen } from "@/components/relmeg/LoginScreen";
-import { logout, useRelmeg } from "@/lib/relmeg/store";
+import { iniciarSessao, logout, useRelmeg } from "@/lib/relmeg/store";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
@@ -139,7 +139,9 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const { auth, sessao, prefs } = useRelmeg();
   const [pronto, setPronto] = useState(false);
-  useEffect(() => setPronto(true), []);
+  useEffect(() => {
+    void iniciarSessao().finally(() => setPronto(true));
+  }, []);
 
   if (!pronto) {
     return <div className="min-h-screen bg-background" />;
@@ -162,22 +164,22 @@ function RootComponent() {
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/70 bg-background/70 px-4 backdrop-blur-xl">
               <SidebarTrigger />
-              <span className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+              <span className="truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-[11px] sm:tracking-[0.28em]">
                 RelMeg · Inteligência Legislativa
               </span>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 {prefs.mostrarSaudacao && (
                   <span className="hidden items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs text-muted-foreground sm:flex">
                     <span className="h-1.5 w-1.5 rounded-full bg-success" />
                     {prefs.saudacao}, {prefs.nomeExibicao || sessao?.nome || "Admin"}
                   </span>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => logout()}>
-                  <LogOut className="h-4 w-4" /> Sair
+                <Button variant="ghost" size="sm" onClick={() => void logout()}>
+                  <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Sair</span>
                 </Button>
               </div>
             </header>
-            <main className="flex-1 p-4 md:p-8">
+            <main className="min-w-0 flex-1 p-3 sm:p-4 md:p-8">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
             </main>
