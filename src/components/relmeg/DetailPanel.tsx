@@ -1,5 +1,5 @@
 import { Copy, Check, ExternalLink, Pencil, Eye, Trash2, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,10 @@ export function DetailPanel({
   const parlamentar = data.find((p) => p.id === parlamentarId) ?? null;
   const [copiado, setCopiado] = useState(false);
   const [editando, setEditando] = useState(editarAoAbrir);
+
+  useEffect(() => {
+    if (parlamentarId) setEditando(editarAoAbrir);
+  }, [parlamentarId, editarAoAbrir]);
 
   async function copiar() {
     if (!parlamentar) return;
