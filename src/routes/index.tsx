@@ -74,6 +74,7 @@ function Perfis() {
 
   const Painel = (
     <DetailPanel
+      key={selecionado ?? "vazio"}
       parlamentarId={selecionado}
       editarAoAbrir={novo}
       onClose={() => {
