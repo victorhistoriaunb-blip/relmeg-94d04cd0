@@ -1,47 +1,70 @@
 /**
- * Autenticação local (usuário único).
- * A estrutura é baseada em uma lista de usuários para permitir, no futuro,
- * múltiplos usuários sem grandes alterações — hoje apenas um usuário padrão.
+ * Autenticação da plataforma (usuário único nesta versão).
+ * O login é convertido em uma conta na nuvem, o que mantém os dados
+ * vinculados ao usuário e sincronizados entre dispositivos.
+ * A estrutura permite, no futuro, múltiplos usuários sem grandes alterações.
  */
-export type Usuario = {
-  login: string;
-  senha: string;
-  nome: string;
-};
+import { supabase } from "@/integrations/supabase/client";
 
-export const USUARIOS_PADRAO: Usuario[] = [
-  { login: "admin", senha: "relgov2026", nome: "Admin" },
-];
+const DOMINIO_INTERNO = "relmeg.app";
 
-const USUARIOS_KEY = "relmeg:usuarios";
+export type Usuario = { login: string; nome: string };
 
-export function lerUsuarios(): Usuario[] {
-  if (typeof window === "undefined") return USUARIOS_PADRAO;
-  try {
-    const raw = window.localStorage.getItem(USUARIOS_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Usuario[]) : null;
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-  } catch {
-    /* ignora */
+export const USUARIO_PADRAO = { login: "admin", senha: "relgov2026", nome: "Admin" };
+
+export function normalizarLogin(login: string) {
+  return login.trim().toLowerCase();
+}
+
+export function emailDe(login: string) {
+  return `${normalizarLogin(login)}@${DOMINIO_INTERNO}`;
+}
+
+function nomeDe(login: string, meta?: Record<string, unknown> | null) {
+  const nome = meta?.["nome"];
+  if (typeof nome === "string" && nome.trim()) return nome;
+  return login.charAt(0).toUpperCase() + login.slice(1);
+}
+
+export async function autenticar(login: string, senha: string): Promise<Usuario | null> {
+  const alvo = normalizarLogin(login);
+  const email = emailDe(alvo);
+
+  let resultado = await supabase.auth.signInWithPassword({ email, password: senha });
+
+  // Primeiro acesso do usuário padrão: cria a conta na nuvem automaticamente.
+  if (resultado.error && alvo === USUARIO_PADRAO.login && senha === USUARIO_PADRAO.senha) {
+    const criacao = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: { data: { nome: USUARIO_PADRAO.nome, login: alvo } },
+    });
+    if (!criacao.error) {
+      resultado = await supabase.auth.signInWithPassword({ email, password: senha });
+    }
   }
-  return USUARIOS_PADRAO;
+
+  if (resultado.error || !resultado.data.user) return null;
+  return { login: alvo, nome: nomeDe(alvo, resultado.data.user.user_metadata) };
 }
 
-export function salvarUsuarios(usuarios: Usuario[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(USUARIOS_KEY, JSON.stringify(usuarios));
+export async function usuarioAtual(): Promise<Usuario | null> {
+  const { data } = await supabase.auth.getUser();
+  if (!data.user?.email) return null;
+  const login = data.user.email.split("@")[0] ?? "admin";
+  return { login, nome: nomeDe(login, data.user.user_metadata) };
 }
 
-export function autenticar(login: string, senha: string): Usuario | null {
-  const alvo = login.trim().toLowerCase();
-  return lerUsuarios().find((u) => u.login.toLowerCase() === alvo && u.senha === senha) ?? null;
+export async function encerrarSessao() {
+  await supabase.auth.signOut();
 }
 
-export function alterarSenha(login: string, senhaAtual: string, novaSenha: string): boolean {
-  const usuarios = lerUsuarios();
-  const idx = usuarios.findIndex((u) => u.login.toLowerCase() === login.toLowerCase() && u.senha === senhaAtual);
-  if (idx === -1) return false;
-  usuarios[idx] = { ...usuarios[idx]!, senha: novaSenha };
-  salvarUsuarios(usuarios);
-  return true;
+export async function alterarSenha(login: string, senhaAtual: string, novaSenha: string): Promise<boolean> {
+  const conferencia = await supabase.auth.signInWithPassword({
+    email: emailDe(login),
+    password: senhaAtual,
+  });
+  if (conferencia.error) return false;
+  const { error } = await supabase.auth.updateUser({ password: novaSenha });
+  return !error;
 }
