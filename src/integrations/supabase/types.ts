@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      parlamentares: {
+        Row: {
+          anotacoes: string
+          cargo: string
+          contrario1: string
+          contrario2: string
+          created_at: string
+          descricao: string
+          ementa1: string
+          ementa2: string
+          ementa3: string
+          id: string
+          interesse1: string
+          interesse2: string
+          link1: string
+          link2: string
+          link3: string
+          nome: string
+          partido: string
+          proposicao1: string
+          proposicao2: string
+          proposicao3: string
+          setor1: string
+          setor2: string
+          setor3: string
+          uf: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anotacoes?: string
+          cargo?: string
+          contrario1?: string
+          contrario2?: string
+          created_at?: string
+          descricao?: string
+          ementa1?: string
+          ementa2?: string
+          ementa3?: string
+          id?: string
+          interesse1?: string
+          interesse2?: string
+          link1?: string
+          link2?: string
+          link3?: string
+          nome?: string
+          partido?: string
+          proposicao1?: string
+          proposicao2?: string
+          proposicao3?: string
+          setor1?: string
+          setor2?: string
+          setor3?: string
+          uf?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anotacoes?: string
+          cargo?: string
+          contrario1?: string
+          contrario2?: string
+          created_at?: string
+          descricao?: string
+          ementa1?: string
+          ementa2?: string
+          ementa3?: string
+          id?: string
+          interesse1?: string
+          interesse2?: string
+          link1?: string
+          link2?: string
+          link3?: string
+          nome?: string
+          partido?: string
+          proposicao1?: string
+          proposicao2?: string
+          proposicao3?: string
+          setor1?: string
+          setor2?: string
+          setor3?: string
+          uf?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
