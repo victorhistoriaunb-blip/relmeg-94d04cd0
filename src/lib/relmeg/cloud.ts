@@ -38,8 +38,8 @@ export function paraParlamentar(linha: Linha): Parlamentar {
   return p;
 }
 
-export function paraLinha(p: Partial<Parlamentar>) {
-  const linha: Record<string, string> = {};
+export function paraLinha(p: Partial<Parlamentar>): Partial<Record<CampoDB, string>> {
+  const linha: Partial<Record<CampoDB, string>> = {};
   for (const campo of CAMPOS_DB) {
     const valor = p[campo as CampoDB];
     if (valor !== undefined) linha[campo] = String(valor ?? "");
