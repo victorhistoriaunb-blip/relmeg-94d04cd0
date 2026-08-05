@@ -13,23 +13,26 @@ export function LoginScreen() {
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  function entrar(e: React.FormEvent) {
+  async function entrar(e: React.FormEvent) {
     e.preventDefault();
     if (!usuario.trim() || !senha) {
       toast.error("Informe usuário e senha");
       return;
     }
     setCarregando(true);
-    window.setTimeout(() => {
-      const encontrado = autenticar(usuario, senha);
+    try {
+      const encontrado = await autenticar(usuario, senha);
       if (encontrado) {
-        entrarNaSessao({ login: encontrado.login, nome: encontrado.nome });
+        await entrarNaSessao({ login: encontrado.login, nome: encontrado.nome });
         toast.success(`Bem-vindo, ${encontrado.nome}`);
       } else {
         toast.error("Credenciais inválidas");
         setCarregando(false);
       }
-    }, 450);
+    } catch {
+      toast.error("Não foi possível conectar. Tente novamente.");
+      setCarregando(false);
+    }
   }
 
   return (
