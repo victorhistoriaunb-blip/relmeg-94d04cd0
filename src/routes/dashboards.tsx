@@ -128,7 +128,7 @@ function Dashboards() {
           <CartesianGrid horizontal={false} stroke={GRADE} />
           <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
           <YAxis type="category" dataKey="name" width={150} stroke={EIXO} tick={tick} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
           <Bar dataKey="total" fill={VERDE} radius={[0, 4, 4, 0]} />
         </BarChart>
       </Painel>
@@ -139,7 +139,7 @@ function Dashboards() {
           <CartesianGrid horizontal={false} stroke={GRADE} />
           <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
           <YAxis type="category" dataKey="name" width={150} stroke={EIXO} tick={tick} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
           <Bar dataKey="total" fill={VERMELHO} radius={[0, 4, 4, 0]} />
         </BarChart>
       </Painel>
@@ -150,7 +150,7 @@ function Dashboards() {
           <CartesianGrid horizontal={false} stroke={GRADE} />
           <XAxis type="number" stroke={EIXO} tick={tick} allowDecimals={false} />
           <YAxis type="category" dataKey="name" width={48} stroke={EIXO} tick={tick} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
           <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
         </BarChart>
       </Painel>
@@ -166,7 +166,7 @@ function Dashboards() {
               ))}
             </Pie>
             <Legend wrapperStyle={{ fontSize: 12, color: EIXO }} />
-            <Tooltip contentStyle={tooltipStyle} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
           </PieChart>
         </Painel>
       );
@@ -177,7 +177,7 @@ function Dashboards() {
           <CartesianGrid vertical={false} stroke={GRADE} />
           <XAxis dataKey="name" stroke={EIXO} tick={tick} />
           <YAxis stroke={EIXO} tick={tick} allowDecimals={false} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
           <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
         </BarChart>
       </Painel>
@@ -196,7 +196,7 @@ function Dashboards() {
             textAnchor="end"
           />
           <YAxis stroke={EIXO} tick={tick} allowDecimals={false} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
+          <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: REALCE, opacity: 0.3 }} />
           <Bar dataKey="total" fill={CORES[2]} radius={[4, 4, 0, 0]} />
         </BarChart>
       </Painel>
