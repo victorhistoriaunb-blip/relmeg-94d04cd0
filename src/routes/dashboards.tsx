@@ -15,6 +15,7 @@ import {
 import { SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KpiCards } from "@/components/relmeg/KpiCards";
+import { FichaDialog } from "@/components/relmeg/FichaDialog";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
 import { useRelmeg } from "@/lib/relmeg/store";
@@ -69,6 +70,9 @@ const tooltipStyle = {
   color: "oklch(0.98 0.008 250)",
   fontSize: 12,
 };
+
+const tooltipLabelStyle = { color: "oklch(0.98 0.008 250)", fontWeight: 600 };
+const tooltipItemStyle = { color: "oklch(0.93 0.012 250)" };
 
 const tick = { fill: EIXO, fontSize: 12 };
 
@@ -205,11 +209,14 @@ function Dashboards() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <Titulo />
-        <Button asChild variant="outline" size="sm">
-          <Link to="/configuracoes">
-            <SlidersHorizontal className="h-4 w-4" /> Editar cards
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/configuracoes">
+              <SlidersHorizontal className="h-4 w-4" /> Editar cards
+            </Link>
+          </Button>
+          <FichaDialog data={filtrados} filters={filters} />
+        </div>
       </div>
       <KpiCards data={filtrados} />
       <FilterBar data={data} />
