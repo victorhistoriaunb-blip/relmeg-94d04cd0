@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      dashboard_widgets: {
+        Row: {
+          aggregation: string
+          category_column: string
+          chart_type: string
+          created_at: string
+          dataset_id: string
+          description: string
+          id: string
+          is_featured: boolean
+          is_visible: boolean
+          item_limit: number
+          position: number
+          title: string
+          updated_at: string
+          user_id: string
+          value_column: string | null
+        }
+        Insert: {
+          aggregation?: string
+          category_column?: string
+          chart_type?: string
+          created_at?: string
+          dataset_id: string
+          description?: string
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          item_limit?: number
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id: string
+          value_column?: string | null
+        }
+        Update: {
+          aggregation?: string
+          category_column?: string
+          chart_type?: string
+          created_at?: string
+          dataset_id?: string
+          description?: string
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          item_limit?: number
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+          value_column?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_widgets_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_records: {
+        Row: {
+          created_at: string
+          data: Json
+          dataset_id: string
+          id: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          dataset_id: string
+          id?: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          dataset_id?: string
+          id?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_records_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      datasets: {
+        Row: {
+          columns: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          columns?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          columns?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       parlamentares: {
         Row: {
           anotacoes: string
