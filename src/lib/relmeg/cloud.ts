@@ -1,79 +1,66 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Parlamentar } from "./types";
+import type { DashboardWidget, DataColumn, DataRecord, Dataset, CellValue } from "./types";
 
-export const CAMPOS_DB = [
-  "nome",
-  "partido",
-  "uf",
-  "cargo",
-  "interesse1",
-  "interesse2",
-  "contrario1",
-  "contrario2",
-  "setor1",
-  "setor2",
-  "setor3",
-  "descricao",
-  "proposicao1",
-  "ementa1",
-  "link1",
-  "proposicao2",
-  "ementa2",
-  "link2",
-  "proposicao3",
-  "ementa3",
-  "link3",
-  "anotacoes",
-] as const;
+type Json = import("@/integrations/supabase/types").Json;
 
-type CampoDB = (typeof CAMPOS_DB)[number];
+const asColumns = (value: Json): DataColumn[] => Array.isArray(value) ? value.filter((v): v is Record<string, Json | undefined> => Boolean(v && typeof v === "object" && !Array.isArray(v))).map((v, i) => ({ key: String(v.key ?? `coluna_${i}`), label: String(v.label ?? `Coluna ${i + 1}`), type: (["text", "number", "date", "boolean"].includes(String(v.type)) ? String(v.type) : "text") as DataColumn["type"], position: Number(v.position ?? i) })) : [];
+const asData = (value: Json): Record<string, CellValue> => value && typeof value === "object" && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, typeof v === "string" || typeof v === "number" || typeof v === "boolean" || v === null ? v : String(v)])) : {};
 
-type Linha = Record<string, unknown> & { id: string };
+export async function loadWorkspace(userId: string): Promise<{ dataset: Dataset | null; records: DataRecord[]; widgets: DashboardWidget[] }> {
+  const { data: bases, error } = await supabase.from("datasets").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+  if (error) throw error;
+  const row = bases?.find((b) => b.is_active) ?? bases?.[0];
+  if (!row) return { dataset: null, records: [], widgets: [] };
+  const [{ data: records, error: re }, { data: widgets, error: we }] = await Promise.all([
+    supabase.from("data_records").select("*").eq("dataset_id", row.id).order("position"),
+    supabase.from("dashboard_widgets").select("*").eq("dataset_id", row.id).order("position"),
+  ]);
+  if (re) throw re;
+  if (we) throw we;
+  return {
+    dataset: { id: row.id, name: row.name, columns: asColumns(row.columns) },
+    records: (records ?? []).map((r) => ({ id: r.id, data: asData(r.data), position: r.position })),
+    widgets: (widgets ?? []).map((w) => ({ id: w.id, title: w.title, description: w.description, chartType: w.chart_type as DashboardWidget["chartType"], categoryColumn: w.category_column, valueColumn: w.value_column, aggregation: w.aggregation as DashboardWidget["aggregation"], itemLimit: w.item_limit, position: w.position, isVisible: w.is_visible, isFeatured: w.is_featured })),
+  };
+}
 
-export function paraParlamentar(linha: Linha): Parlamentar {
-  const p = { id: String(linha["id"]) } as Parlamentar;
-  for (const campo of CAMPOS_DB) {
-    (p as Record<string, unknown>)[campo] = String(linha[campo] ?? "");
+export async function replaceDataset(userId: string, name: string, columns: DataColumn[], rows: Record<string, CellValue>[]) {
+  await supabase.from("datasets").update({ is_active: false }).eq("user_id", userId);
+  const { data: dataset, error } = await supabase.from("datasets").insert({ user_id: userId, name, columns: columns as unknown as Json, is_active: true }).select("*").single();
+  if (error) throw error;
+  if (rows.length) {
+    const { error: insertError } = await supabase.from("data_records").insert(rows.map((data, position) => ({ user_id: userId, dataset_id: dataset.id, data: data as unknown as Json, position })));
+    if (insertError) throw insertError;
   }
-  return p;
+  return dataset.id;
 }
 
-export function paraLinha(p: Partial<Parlamentar>): Partial<Record<CampoDB, string>> {
-  const linha: Partial<Record<CampoDB, string>> = {};
-  for (const campo of CAMPOS_DB) {
-    const valor = p[campo as CampoDB];
-    if (valor !== undefined) linha[campo] = String(valor ?? "");
-  }
-  return linha;
-}
-
-export async function listarParlamentares(): Promise<Parlamentar[]> {
-  const { data, error } = await supabase
-    .from("parlamentares")
-    .select("*")
-    .order("nome", { ascending: true });
+export async function createRecord(userId: string, datasetId: string, data: Record<string, CellValue>, position: number) {
+  const { data: row, error } = await supabase.from("data_records").insert({ user_id: userId, dataset_id: datasetId, data: data as unknown as Json, position }).select("*").single();
   if (error) throw error;
-  return (data ?? []).map((linha) => paraParlamentar(linha as Linha));
+  return { id: row.id, data: asData(row.data), position: row.position };
 }
+export async function updateRecord(id: string, data: Record<string, CellValue>) { const { error } = await supabase.from("data_records").update({ data: data as unknown as Json }).eq("id", id); if (error) throw error; }
+export async function deleteRecord(id: string) { const { error } = await supabase.from("data_records").delete().eq("id", id); if (error) throw error; }
+export async function clearDataset(id: string) { const { error } = await supabase.from("datasets").delete().eq("id", id); if (error) throw error; }
 
-export async function inserirParlamentares(userId: string, rows: Partial<Parlamentar>[]) {
-  const payload = rows.map((r) => ({ ...paraLinha(r), user_id: userId }));
-  const { data, error } = await supabase.from("parlamentares").insert(payload).select("*");
+export async function createWidget(userId: string, datasetId: string, categoryColumn: string, position: number) {
+  const { data, error } = await supabase.from("dashboard_widgets").insert({ user_id: userId, dataset_id: datasetId, title: "Novo dashboard", category_column: categoryColumn, position }).select("*").single();
   if (error) throw error;
-  return (data ?? []).map((linha) => paraParlamentar(linha as Linha));
+  return data.id;
 }
-
-export async function atualizarParlamentarNaNuvem(id: string, patch: Partial<Parlamentar>) {
-  const { error } = await supabase.from("parlamentares").update(paraLinha(patch)).eq("id", id);
-  if (error) throw error;
+export async function updateWidget(id: string, patch: Partial<DashboardWidget>) {
+  const db: Record<string, unknown> = {};
+  if (patch.title !== undefined) db.title = patch.title;
+  if (patch.description !== undefined) db.description = patch.description;
+  if (patch.chartType !== undefined) db.chart_type = patch.chartType;
+  if (patch.categoryColumn !== undefined) db.category_column = patch.categoryColumn;
+  if (patch.valueColumn !== undefined) db.value_column = patch.valueColumn;
+  if (patch.aggregation !== undefined) db.aggregation = patch.aggregation;
+  if (patch.itemLimit !== undefined) db.item_limit = patch.itemLimit;
+  if (patch.position !== undefined) db.position = patch.position;
+  if (patch.isVisible !== undefined) db.is_visible = patch.isVisible;
+  if (patch.isFeatured !== undefined) db.is_featured = patch.isFeatured;
+  const { error } = await supabase.from("dashboard_widgets").update(db).eq("id", id); if (error) throw error;
 }
-
-export async function excluirParlamentarDaNuvem(id: string) {
-  const { error } = await supabase.from("parlamentares").delete().eq("id", id);
-  if (error) throw error;
-}
-
-export async function limparBaseNaNuvem(userId: string) {
-  const { error } = await supabase.from("parlamentares").delete().eq("user_id", userId);
-  if (error) throw error;
-}
+export async function deleteWidget(id: string) { const { error } = await supabase.from("dashboard_widgets").delete().eq("id", id); if (error) throw error; }
