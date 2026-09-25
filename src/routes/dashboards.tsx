@@ -39,11 +39,12 @@ const tip = {
 const tick = { fill: EIXO, fontSize: 12 };
 const AGG: Record<DashboardWidget["aggregation"], string> = { count: "Contagem", sum: "Soma", average: "Média", min: "Mínimo", max: "Máximo" };
 
-function Grafico({ w, data }: { w: DashboardWidget; data: DataRecord[] }): ReactElement {
+function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRecord[]; width?: number | string; height?: number | string }): ReactElement {
   const d = agregar(data, w);
+  const size = { width, height };
   if (w.chartType === "pie")
     return (
-      <PieChart>
+      <PieChart {...size}>
         <Pie data={d} dataKey="total" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={2}>
           {d.map((e, i) => <Cell key={e.name} fill={CORES[i % CORES.length]} />)}
         </Pie>
@@ -53,7 +54,7 @@ function Grafico({ w, data }: { w: DashboardWidget; data: DataRecord[] }): React
     );
   if (w.chartType === "line")
     return (
-      <LineChart data={d}>
+      <LineChart data={d} {...size}>
         <CartesianGrid vertical={false} stroke={GRADE} />
         <XAxis dataKey="name" stroke={EIXO} tick={tick} />
         <YAxis stroke={EIXO} tick={tick} />
@@ -62,7 +63,7 @@ function Grafico({ w, data }: { w: DashboardWidget; data: DataRecord[] }): React
       </LineChart>
     );
   return (
-    <BarChart data={d} layout="vertical" margin={{ left: 8, right: 16 }}>
+    <BarChart data={d} layout="vertical" margin={{ left: 8, right: 16 }} {...size}>
       <CartesianGrid horizontal={false} stroke={GRADE} />
       <XAxis type="number" stroke={EIXO} tick={tick} />
       <YAxis type="category" dataKey="name" width={120} stroke={EIXO} tick={tick} />
