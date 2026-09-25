@@ -205,7 +205,7 @@ function Configuracoes() {
             />
           </div>
           <div className="flex items-center justify-between rounded-md border border-border p-3">
-            <Label htmlFor="mostrarKpisPerfis">Exibir indicadores na página Perfis</Label>
+            <Label htmlFor="mostrarKpisPerfis">Exibir indicadores na página Dados</Label>
             <Switch
               id="mostrarKpisPerfis"
               checked={prefs.mostrarKpisPerfis}

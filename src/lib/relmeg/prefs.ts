@@ -17,20 +17,14 @@ export type Prefs = {
 };
 
 export const KPIS_PADRAO: CardPref[] = [
-  { key: "total", titulo: "Total de Parlamentares", descricao: "na seleção atual", visivel: true },
-  { key: "apoio", titulo: "Tema com Maior Apoio", descricao: "parlamentares favoráveis", visivel: true },
-  { key: "resistencia", titulo: "Tema com Maior Resistência", descricao: "parlamentares contrários", visivel: true },
-  { key: "uf", titulo: "UF com Maior Representação", descricao: "parlamentares", visivel: true },
+  { key: "registros", titulo: "Registros", descricao: "na seleção atual", visivel: true },
+  { key: "colunas", titulo: "Colunas", descricao: "detectadas na base", visivel: true },
+  { key: "preenchidos", titulo: "Dados preenchidos", descricao: "células com conteúdo", visivel: true },
+  { key: "numericos", titulo: "Campos numéricos", descricao: "disponíveis para cálculos", visivel: true },
 ];
 
-export const PAINEIS_PADRAO: CardPref[] = [
-  { key: "interesse", titulo: "Temas de Interesse", descricao: "Temas com maior apoio", visivel: true, limite: 10 },
-  { key: "contrario", titulo: "Temas Contrários", descricao: "Temas com maior resistência", visivel: true, limite: 10 },
-  { key: "uf", titulo: "Parlamentares por UF", descricao: "Unidades federativas", visivel: true, limite: 15 },
-  { key: "partido", titulo: "Parlamentares por Partido", descricao: "Principais partidos", visivel: true, limite: 8 },
-  { key: "cargo", titulo: "Parlamentares por Cargo", descricao: "Composição da base por função", visivel: true, limite: 0 },
-  { key: "setor", titulo: "Parlamentares por Setor", descricao: "Setores de atuação", visivel: true, limite: 10 },
-];
+/** Os dashboards agora são criados e organizados na própria página Dashboards. */
+export const PAINEIS_PADRAO: CardPref[] = [];
 
 export const PREFS_PADRAO: Prefs = {
   saudacao: "Olá",
