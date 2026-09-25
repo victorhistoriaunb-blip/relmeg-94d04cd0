@@ -88,12 +88,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários.",
+          "Criador universal de dashboards: importe qualquer planilha CSV ou Excel e monte gráficos, filtros e relatórios a partir de qualquer coluna.",
       },
       { property: "og:title", content: "RelMeg - Inteligência Legislativa" },
       {
         property: "og:description",
-        content: "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários.",
+        content: "Criador universal de dashboards a partir de qualquer planilha CSV ou Excel.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

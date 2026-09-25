@@ -300,6 +300,10 @@ function Configuracoes() {
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
         <Save className="h-3.5 w-3.5" /> Todas as alterações são salvas automaticamente neste navegador.
       </p>
+
+      <footer className="pt-4 text-center">
+        <span className="text-[11px] tracking-wide text-muted-foreground/60">Criado por Victor Souza</span>
+      </footer>
     </div>
   );
 }
