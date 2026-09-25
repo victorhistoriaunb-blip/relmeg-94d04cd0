@@ -213,7 +213,7 @@ function Configuracoes() {
             />
           </div>
           <div className="flex items-center justify-between rounded-md border border-border p-3 md:col-span-2">
-            <Label>Visualização padrão dos Perfis</Label>
+            <Label>Visualização padrão dos Dados</Label>
             <div className="flex gap-1 rounded-md border border-border p-1">
               <Button
                 size="sm"
@@ -241,13 +241,17 @@ function Configuracoes() {
         descricao="Edite os títulos, textos, ordem e visibilidade dos indicadores do topo."
       />
 
-      <ListaCards
-        grupo="paineis"
-        cards={prefs.paineis}
-        titulo="Cards do Dashboard"
-        descricao="Edite títulos, descrições, quantidade de itens, ordem e visibilidade dos gráficos."
-        comLimite
-      />
+      {prefs.paineis.length > 0 && (
+        <ListaCards
+          grupo="paineis"
+          cards={prefs.paineis}
+          titulo="Cards do Dashboard"
+          descricao="Edite títulos, descrições, quantidade de itens, ordem e visibilidade dos gráficos."
+          comLimite
+        />
+      )}
+
+
 
       <div className="panel panel-hover rounded-xl p-6">
         <h2 className="font-display text-base font-semibold">Segurança</h2>
