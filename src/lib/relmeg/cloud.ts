@@ -3,7 +3,7 @@ import type { DashboardWidget, DataColumn, DataRecord, Dataset, CellValue } from
 
 type Json = import("@/integrations/supabase/types").Json;
 
-const asColumns = (value: Json): DataColumn[] => Array.isArray(value) ? value.filter((v): v is Record<string, Json | undefined> => Boolean(v && typeof v === "object" && !Array.isArray(v))).map((v, i) => ({ key: String(v.key ?? `coluna_${i}`), label: String(v.label ?? `Coluna ${i + 1}`), type: (["text", "number", "date", "boolean"].includes(String(v.type)) ? String(v.type) : "text") as DataColumn["type"], position: Number(v.position ?? i) })) : [];
+const asColumns = (value: Json): DataColumn[] => Array.isArray(value) ? value.filter((v): v is Record<string, Json | undefined> => Boolean(v && typeof v === "object" && !Array.isArray(v))).map((v, i) => ({ key: String(v["key"] ?? `coluna_${i}`), label: String(v["label"] ?? `Coluna ${i + 1}`), type: (["text", "number", "date", "boolean"].includes(String(v["type"])) ? String(v["type"]) : "text") as DataColumn["type"], position: Number(v["position"] ?? i) })) : [];
 const asData = (value: Json): Record<string, CellValue> => value && typeof value === "object" && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, typeof v === "string" || typeof v === "number" || typeof v === "boolean" || v === null ? v : String(v)])) : {};
 
 export async function loadWorkspace(userId: string): Promise<{ dataset: Dataset | null; records: DataRecord[]; widgets: DashboardWidget[] }> {
@@ -50,7 +50,7 @@ export async function createWidget(userId: string, datasetId: string, categoryCo
   return data.id;
 }
 export async function updateWidget(id: string, patch: Partial<DashboardWidget>) {
-  const db: Record<string, unknown> = {};
+  const db: import("@/integrations/supabase/types").TablesUpdate<"dashboard_widgets"> = {};
   if (patch.title !== undefined) db.title = patch.title;
   if (patch.description !== undefined) db.description = patch.description;
   if (patch.chartType !== undefined) db.chart_type = patch.chartType;
