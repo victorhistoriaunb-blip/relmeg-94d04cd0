@@ -98,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "RelMeg - Inteligência Legislativa" },
-      { name: "twitter:description", content: "Perfis parlamentares com filtros por partido, UF, cargo, setor, temas de interesse e temas contrários." },
+      { name: "twitter:description", content: "Criador universal de dashboards a partir de qualquer planilha CSV ou Excel." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5d70a014-5967-4a24-80de-2645e0a20c3f" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5d70a014-5967-4a24-80de-2645e0a20c3f" },
     ],
