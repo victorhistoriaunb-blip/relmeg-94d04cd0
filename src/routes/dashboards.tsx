@@ -39,9 +39,9 @@ const tip = {
 const tick = { fill: EIXO, fontSize: 12 };
 const AGG: Record<DashboardWidget["aggregation"], string> = { count: "Contagem", sum: "Soma", average: "Média", min: "Mínimo", max: "Máximo" };
 
-function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRecord[]; width?: number | string; height?: number | string }): ReactElement {
+function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRecord[]; width?: number; height?: number }): ReactElement {
   const d = agregar(data, w);
-  const size = { width, height };
+  const size = width !== undefined && height !== undefined ? { width, height } : {};
   if (w.chartType === "pie")
     return (
       <PieChart {...size}>
