@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactElement } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Plus, Star, Trash2, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
+import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,9 +10,9 @@ import { KpiCards } from "@/components/relmeg/KpiCards";
 import { FichaDialog } from "@/components/relmeg/FichaDialog";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
-import { adicionarWidget, editarWidget, excluirWidget, useRelmeg } from "@/lib/relmeg/store";
+import { adicionarWidget, editarWidget, excluirWidget, moverWidget, useRelmeg } from "@/lib/relmeg/store";
 import { agregar } from "@/lib/relmeg/report";
-import type { DashboardWidget, DataColumn, DataRecord } from "@/lib/relmeg/types";
+import { CHART_TYPES, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -42,35 +43,88 @@ const AGG: Record<DashboardWidget["aggregation"], string> = { count: "Contagem",
 function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRecord[]; width?: number; height?: number }): ReactElement {
   const d = agregar(data, w);
   const size = width !== undefined && height !== undefined ? { width, height } : {};
-  if (w.chartType === "pie")
-    return (
-      <PieChart {...size}>
-        <Pie data={d} dataKey="total" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={2}>
-          {d.map((e, i) => <Cell key={e.name} fill={CORES[i % CORES.length]} />)}
-        </Pie>
-        <Legend wrapperStyle={{ fontSize: 12, color: EIXO }} />
-        <Tooltip {...tip} />
-      </PieChart>
-    );
-  if (w.chartType === "line")
-    return (
-      <LineChart data={d} {...size}>
-        <CartesianGrid vertical={false} stroke={GRADE} />
-        <XAxis dataKey="name" stroke={EIXO} tick={tick} />
-        <YAxis stroke={EIXO} tick={tick} />
-        <Tooltip {...tip} />
-        <Line dataKey="total" stroke={CORES[0]} strokeWidth={2} />
-      </LineChart>
-    );
-  return (
-    <BarChart data={d} layout="vertical" margin={{ left: 8, right: 16 }} {...size}>
-      <CartesianGrid horizontal={false} stroke={GRADE} />
-      <XAxis type="number" stroke={EIXO} tick={tick} />
-      <YAxis type="category" dataKey="name" width={120} stroke={EIXO} tick={tick} />
-      <Tooltip {...tip} />
-      <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
-    </BarChart>
-  );
+  const cores = d.map((e, i) => <Cell key={e.name} fill={CORES[i % CORES.length]} />);
+  switch (w.chartType) {
+    case "pie":
+    case "donut":
+      return (
+        <PieChart {...size}>
+          <Pie data={d} dataKey="total" nameKey="name" innerRadius={w.chartType === "donut" ? 60 : 0} outerRadius={100} paddingAngle={w.chartType === "donut" ? 2 : 0}>{cores}</Pie>
+          <Legend wrapperStyle={{ fontSize: 12, color: EIXO }} />
+          <Tooltip {...tip} />
+        </PieChart>
+      );
+    case "line":
+    case "area":
+      return w.chartType === "line" ? (
+        <LineChart data={d} {...size}>
+          <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
+          <Line dataKey="total" stroke={CORES[0]} strokeWidth={2} />
+        </LineChart>
+      ) : (
+        <AreaChart data={d} {...size}>
+          <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
+          <Area dataKey="total" stroke={CORES[0]} fill={CORES[0]} fillOpacity={0.3} strokeWidth={2} />
+        </AreaChart>
+      );
+    case "column":
+      return (
+        <BarChart data={d} {...size}>
+          <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
+          <Bar dataKey="total" radius={[4, 4, 0, 0]}>{cores}</Bar>
+        </BarChart>
+      );
+    case "stacked":
+      return (
+        <ComposedChart data={d} {...size}>
+          <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
+          <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
+          <Line dataKey="total" stroke={CORES[3]} strokeWidth={2} />
+        </ComposedChart>
+      );
+    case "radar":
+      return (
+        <RadarChart data={d} outerRadius={100} {...size}>
+          <PolarGrid stroke={GRADE} /><PolarAngleAxis dataKey="name" tick={tick} /><PolarRadiusAxis stroke={EIXO} tick={{ ...tick, fontSize: 10 }} /><Tooltip {...tip} />
+          <Radar dataKey="total" stroke={CORES[0]} fill={CORES[0]} fillOpacity={0.35} />
+        </RadarChart>
+      );
+    case "radial":
+      return (
+        <RadialBarChart data={d.map((x, i) => ({ ...x, fill: CORES[i % CORES.length] }))} innerRadius={30} outerRadius={120} {...size}>
+          <RadialBar dataKey="total" background={{ fill: GRADE }} />
+          <Legend wrapperStyle={{ fontSize: 12, color: EIXO }} />
+          <Tooltip {...tip} />
+        </RadialBarChart>
+      );
+    case "treemap":
+      return (
+        <Treemap data={d.map((x, i) => ({ ...x, fill: CORES[i % CORES.length] }))} dataKey="total" nameKey="name" stroke="oklch(0.18 0.03 264)" {...size}>
+          <Tooltip {...tip} />
+        </Treemap>
+      );
+    case "funnel":
+      return (
+        <FunnelChart {...size}>
+          <Tooltip {...tip} />
+          <Funnel data={d} dataKey="total" nameKey="name" isAnimationActive>{cores}<LabelList position="right" dataKey="name" fill={EIXO} stroke="none" fontSize={12} /></Funnel>
+        </FunnelChart>
+      );
+    case "scatter":
+      return (
+        <ScatterChart {...size}>
+          <CartesianGrid stroke={GRADE} /><XAxis dataKey="name" type="category" allowDuplicatedCategory={false} stroke={EIXO} tick={tick} /><YAxis dataKey="total" stroke={EIXO} tick={tick} /><Tooltip {...tip} />
+          <Scatter data={d} fill={CORES[0]}>{cores}</Scatter>
+        </ScatterChart>
+      );
+    default:
+      return (
+        <BarChart data={d} layout="vertical" margin={{ left: 8, right: 16 }} {...size}>
+          <CartesianGrid horizontal={false} stroke={GRADE} /><XAxis type="number" stroke={EIXO} tick={tick} /><YAxis type="category" dataKey="name" width={120} stroke={EIXO} tick={tick} /><Tooltip {...tip} />
+          <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
+        </BarChart>
+      );
+  }
 }
 
 function Editor({ w, columns }: { w: DashboardWidget; columns: DataColumn[] }) {
@@ -84,7 +138,7 @@ function Editor({ w, columns }: { w: DashboardWidget; columns: DataColumn[] }) {
       </Select>
       <Select value={w.chartType} onValueChange={(v) => editarWidget(w.id, { chartType: v as DashboardWidget["chartType"] })}>
         <SelectTrigger aria-label="Tipo"><SelectValue /></SelectTrigger>
-        <SelectContent><SelectItem value="bar">Barras</SelectItem><SelectItem value="pie">Pizza</SelectItem><SelectItem value="line">Linha</SelectItem></SelectContent>
+        <SelectContent>{CHART_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
       </Select>
       <Select value={w.aggregation} onValueChange={(v) => editarWidget(w.id, v === "count" ? { aggregation: "count", valueColumn: null } : { aggregation: v as DashboardWidget["aggregation"], valueColumn: w.valueColumn ?? nums[0]?.key ?? null })}>
         <SelectTrigger aria-label="Cálculo"><SelectValue /></SelectTrigger>
@@ -100,12 +154,27 @@ function Editor({ w, columns }: { w: DashboardWidget; columns: DataColumn[] }) {
   );
 }
 
-function Painel({ w, data, columns }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[] }) {
+type Arraste = { index: number; total: number; arrastando: boolean; sobre: boolean; onDragStart: () => void; onDragEnter: () => void; onDrop: () => void; onDragEnd: () => void };
+function Painel({ w, data, columns, dnd }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; dnd: Arraste }) {
   return (
-    <div className="panel panel-hover rounded-xl p-4 sm:p-5">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <h2 className="font-display min-w-0 truncate text-base font-semibold">{w.title}</h2>
+    <div
+      draggable
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; dnd.onDragStart(); }}
+      onDragEnter={dnd.onDragEnter}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => { e.preventDefault(); dnd.onDrop(); }}
+      onDragEnd={dnd.onDragEnd}
+      className={`panel panel-hover min-w-0 rounded-xl p-4 transition sm:p-5 ${dnd.arrastando ? "opacity-50" : ""} ${dnd.sobre ? "ring-2 ring-primary" : ""}`}
+    >
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" aria-hidden />
+          <span className="shrink-0 rounded bg-secondary px-1.5 text-xs text-secondary-foreground">{dnd.index + 1}</span>
+          <h2 className="font-display min-w-0 truncate text-base font-semibold">{w.title}</h2>
+        </div>
         <div className="flex shrink-0 gap-1">
+          <Button size="icon" variant="ghost" aria-label="Mover para cima" disabled={dnd.index === 0} onClick={() => moverWidget(w.id, dnd.index - 1)}><ArrowUp /></Button>
+          <Button size="icon" variant="ghost" aria-label="Mover para baixo" disabled={dnd.index === dnd.total - 1} onClick={() => moverWidget(w.id, dnd.index + 1)}><ArrowDown /></Button>
           <Button size="icon" variant={w.isFeatured ? "default" : "ghost"} aria-label="Destacar" aria-pressed={w.isFeatured} onClick={() => editarWidget(w.id, { isFeatured: !w.isFeatured })}><Star /></Button>
           <Button size="icon" variant="ghost" aria-label={w.isVisible ? "Ocultar" : "Exibir"} onClick={() => editarWidget(w.id, { isVisible: !w.isVisible })}>{w.isVisible ? <Eye /> : <EyeOff />}</Button>
           <Button size="icon" variant="ghost" aria-label="Excluir" onClick={() => excluirWidget(w.id)}><Trash2 /></Button>
@@ -119,6 +188,8 @@ function Painel({ w, data, columns }: { w: DashboardWidget; data: DataRecord[]; 
 
 function Dashboards() {
   const { data, dataset, widgets, filters, textos } = useRelmeg();
+  const [arrastado, setArrastado] = useState<string | null>(null);
+  const [sobre, setSobre] = useState<string | null>(null);
   const columns = dataset?.columns ?? [];
   const filtrados = aplicarFiltros(data, filters);
   const destaques = widgets.filter((w) => w.isFeatured && w.isVisible);
@@ -160,7 +231,17 @@ function Dashboards() {
             {widgets.length === 0 ? (
               <div className="panel rounded-xl p-10 text-center text-sm text-muted-foreground">Nenhum dashboard ainda. Clique em "Novo dashboard" para começar.</div>
             ) : (
-              <div className="grid gap-4 xl:grid-cols-2">{widgets.map((w) => <Painel key={w.id} w={w} data={filtrados} columns={columns} />)}</div>
+              <>
+                <p className="text-xs text-muted-foreground">Arraste os cartões ou use as setas para mudar a prioridade. A ordem vale também para os destaques e para as fichas exportadas.</p>
+                <div className="grid gap-4 xl:grid-cols-2">{widgets.map((w, i) => (
+                  <Painel key={w.id} w={w} data={filtrados} columns={columns} dnd={{
+                    index: i, total: widgets.length, arrastando: arrastado === w.id, sobre: sobre === w.id && arrastado !== w.id,
+                    onDragStart: () => setArrastado(w.id), onDragEnter: () => setSobre(w.id),
+                    onDrop: () => { if (arrastado) void moverWidget(arrastado, i); setArrastado(null); setSobre(null); },
+                    onDragEnd: () => { setArrastado(null); setSobre(null); },
+                  }} />
+                ))}</div>
+              </>
             )}
           </section>
         </>
