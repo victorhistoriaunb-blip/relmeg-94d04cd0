@@ -19,6 +19,7 @@ export type Database = {
           aggregation: string
           category_column: string
           chart_type: string
+          combined: boolean
           created_at: string
           dataset_id: string
           description: string
@@ -36,6 +37,7 @@ export type Database = {
           aggregation?: string
           category_column?: string
           chart_type?: string
+          combined?: boolean
           created_at?: string
           dataset_id: string
           description?: string
@@ -53,6 +55,7 @@ export type Database = {
           aggregation?: string
           category_column?: string
           chart_type?: string
+          combined?: boolean
           created_at?: string
           dataset_id?: string
           description?: string
