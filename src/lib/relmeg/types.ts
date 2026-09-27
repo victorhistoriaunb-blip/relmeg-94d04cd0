@@ -3,11 +3,15 @@ export type ColumnType = "text" | "number" | "date" | "boolean";
 export type DataColumn = { key: string; label: string; type: ColumnType; position: number };
 export type DataRecord = { id: string; data: Record<string, CellValue>; position: number };
 export type Dataset = { id: string; name: string; columns: DataColumn[] };
+export type ChartType = "bar" | "column" | "stacked" | "pie" | "donut" | "line" | "area" | "radar" | "radial" | "treemap" | "funnel" | "scatter";
+export const CHART_TYPES: { value: ChartType; label: string }[] = [
+  { value: "bar", label: "Barras horizontais" }, { value: "column", label: "Colunas" }, { value: "stacked", label: "Colunas + linha" }, { value: "pie", label: "Pizza" }, { value: "donut", label: "Rosca" }, { value: "line", label: "Linha" }, { value: "area", label: "Área" }, { value: "radar", label: "Radar" }, { value: "radial", label: "Barras radiais" }, { value: "treemap", label: "Mapa de árvore" }, { value: "funnel", label: "Funil" }, { value: "scatter", label: "Dispersão" },
+];
 export type DashboardWidget = {
   id: string;
   title: string;
   description: string;
-  chartType: "bar" | "pie" | "line";
+  chartType: ChartType;
   categoryColumn: string;
   valueColumn: string | null;
   aggregation: "count" | "sum" | "average" | "min" | "max";

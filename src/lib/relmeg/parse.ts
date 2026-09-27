@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import type { CellValue, ColumnType, DataColumn } from "./types";
 
 export type ParsedRow = Record<string, CellValue>;
-export type ParseResult = { rows: ParsedRow[]; headers: string[]; columns: DataColumn[]; sheetName: string };
+export type ParseResult = { rows: ParsedRow[]; headers: string[]; columns: DataColumn[]; sheetName: string; fileName?: string };
 
 function keyFor(label: string, index: number) {
   const clean = label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -40,5 +40,5 @@ export async function parseFile(file: File): Promise<ParseResult> {
   const body = matrix.slice(1).filter((row) => row.some((v) => v !== "" && v !== null && v !== undefined));
   const columns = headers.map((label, i) => ({ key: keyFor(label, i), label, type: inferType(body.map((r) => r[i])), position: i }));
   const rows = body.map((row) => Object.fromEntries(columns.map((c, i) => [c.key, convert(row[i], c.type)])));
-  return { rows, headers, columns, sheetName };
+  return { rows, headers, columns, sheetName, fileName: file.name.replace(/\.[^.]+$/, "") };
 }
