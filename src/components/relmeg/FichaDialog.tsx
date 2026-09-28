@@ -44,6 +44,8 @@ export function FichaDialog({ data, columns, widgets, filters }: { data: DataRec
             <div className="space-y-1.5"><Label htmlFor="f-s">Subtítulo</Label><Input id="f-s" value={config.subtitulo} onChange={(e) => set("subtitulo", e.target.value)} /></div>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
+            <Opcao id="f-ca" label="Capa" checked={config.incluirCapa} onChange={(v) => set("incluirCapa", v)} />
+            <Opcao id="f-pe" label="Fichas individuais" checked={config.incluirPerfis} onChange={(v) => set("incluirPerfis", v)} />
             <Opcao id="f-fi" label="Filtros" checked={config.incluirFiltros} onChange={(v) => set("incluirFiltros", v)} />
             <Opcao id="f-in" label="Indicadores" checked={config.incluirIndicadores} onChange={(v) => set("incluirIndicadores", v)} />
             <Opcao id="f-gr" label="Gráficos" checked={config.incluirGraficos} onChange={(v) => set("incluirGraficos", v)} />
