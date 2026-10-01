@@ -213,8 +213,12 @@ export async function gerarPptx({ config, data, columns, widgets, filters }: Arg
         { text: l.rotulo, options: { bold: true, color: HEX_NAVY, fill: { color: "F4F7FC" }, valign: "top" as const } },
         { text: l.texto, options: { color: HEX_TEXTO, valign: "top" as const } },
       ]);
-      const s = novoSlide(tituloDe(r, columns, tk));
-      if (rows.length) s.addTable(rows, { x: 0.6, y: 1.6, w: 8.8, colW: [2.4, 6.4], fontSize: 11, border: { type: "solid", color: "E0E7F2", pt: 1 }, margin: 5, autoPage: true, autoPageRepeatHeader: false, autoPageSlideStartY: 1.6 });
+      const nome = tituloDe(r, columns, tk);
+      if (!rows.length) { novoSlide(nome); return; }
+      for (let i = 0; i < rows.length; i += 9) {
+        const s = novoSlide(i ? `${nome} (cont.)` : nome);
+        s.addTable(rows.slice(i, i + 9).map((row) => row.map((cel) => ({ ...cel, text: cel.text.length > 420 ? cel.text.slice(0, 417) + "…" : cel.text }))), { x: 0.6, y: 1.55, w: 8.8, colW: [2.4, 6.4], fontSize: 10, border: { type: "solid", color: "E0E7F2", pt: 1 }, margin: 4 });
+      }
     });
   }
   await pptx.writeFile({ fileName: nomeArquivo(config, "pptx") });
