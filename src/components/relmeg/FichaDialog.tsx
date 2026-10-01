@@ -28,7 +28,7 @@ export function FichaDialog({ data, columns, widgets, filters }: { data: DataRec
       const args = { config, data, columns, widgets, filters };
       if (tipo === "pdf") await gerarPdf(args); else await gerarPptx(args);
       toast.success("Ficha gerada");
-    } catch { toast.error("Não foi possível gerar a ficha"); } finally { setBusy(null); }
+    } catch (e) { console.error(e); toast.error("Não foi possível gerar a ficha"); } finally { setBusy(null); }
   };
   return (
     <Dialog>
