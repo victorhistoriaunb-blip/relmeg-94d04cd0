@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- Várias planilhas por usuário: a visão "todas" une colunas pelo nome (coluna virtual "Planilha"); widgets dessa visão usam combined=true — permite cruzamento sem alterar dados originais.
