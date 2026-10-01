@@ -66,7 +66,10 @@ export function indicadores(data: DataRecord[], columns: DataColumn[], widgets: 
 }
 const dataHoje = () => new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 const nomeArquivo = (c: FichaConfig, ext: string) => `${(c.titulo || "ficha").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "ficha"}-${new Date().toISOString().slice(0, 10)}.${ext}`;
-const linhasDe = (r: DataRecord, cols: DataColumn[], campos: string[], titulo: string) => cols.filter((c) => (!campos.length || campos.includes(c.key)) && c.key !== titulo).map((c) => ({ rotulo: c.label, texto: cellText(r.data[c.key]) })).filter((l) => l.texto.trim());
+const fmt = (v: CellValue | undefined) => { const t = cellText(v); if (/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4} \d{2}:\d{2}/.test(t)) { const d = new Date(t); if (!Number.isNaN(d.getTime())) return d.toLocaleDateString("pt-BR"); } return t; };
+const linhasDe = (r: DataRecord, cols: DataColumn[], campos: string[], titulo: string) => cols.filter((c) => (!campos.length || campos.includes(c.key)) && c.key !== titulo).map((c) => ({ rotulo: c.label, texto: fmt(r.data[c.key]) })).filter((l) => l.texto.trim());
+const tituloDe = (r: DataRecord, cols: DataColumn[], tk: string) => { if (cellText(r.data[tk]).trim()) return tituloRegistro(r, tk); const nome = cols.find((c) => c.key !== "__planilha" && /^(nome|name|titulo|título|title)$/i.test(c.label) && cellText(r.data[c.key]).trim()) ?? cols.find((c) => c.key !== "__planilha" && cellText(r.data[c.key]).trim()); return nome ? tituloRegistro(r, nome.key) : "Registro sem título"; };
+const tituloRegistro = (r: DataRecord, k: string) => fmt(r.data[k]);
 const tituloKey = (cols: DataColumn[]) => (cols.find((c) => /^(nome|name|titulo|título|title)$/i.test(c.label)) ?? cols.find((c) => c.key !== "__planilha") ?? cols[0])?.key ?? "";
 
 type Args = { config: FichaConfig; data: DataRecord[]; columns: DataColumn[]; widgets: DashboardWidget[]; filters: Filters };
@@ -140,7 +143,7 @@ export async function gerarPdf({ config, data, columns, widgets, filters }: Args
     titulo(`Fichas individuais (${lista.length})`);
     lista.forEach((r) => {
       espaco(60); doc.setFillColor(...NAVY); doc.roundedRect(M, y - 12, W - M * 2, 22, 4, 4, "F");
-      doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255); doc.text(doc.splitTextToSize(cellText(r.data[tk]) || "Registro sem título", W - M * 2 - 20)[0] ?? "", M + 10, y + 3); y += 24;
+      doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255); doc.text(doc.splitTextToSize(tituloDe(r, columns, tk), W - M * 2 - 20)[0] ?? "", M + 10, y + 3); y += 24;
       linhasDe(r, columns, config.campos, tk).forEach((l) => {
         const t = doc.splitTextToSize(l.texto, W - M * 2 - 130) as string[]; espaco(14 + t.length * 12);
         doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...CINZA); doc.text(doc.splitTextToSize(l.rotulo, 120) as string[], M, y);
@@ -210,7 +213,7 @@ export async function gerarPptx({ config, data, columns, widgets, filters }: Arg
         { text: l.rotulo, options: { bold: true, color: HEX_NAVY, fill: { color: "F4F7FC" }, valign: "top" as const } },
         { text: l.texto, options: { color: HEX_TEXTO, valign: "top" as const } },
       ]);
-      const s = novoSlide(cellText(r.data[tk]) || "Registro sem título");
+      const s = novoSlide(tituloDe(r, columns, tk));
       if (rows.length) s.addTable(rows, { x: 0.6, y: 1.6, w: 8.8, colW: [2.4, 6.4], fontSize: 11, border: { type: "solid", color: "E0E7F2", pt: 1 }, margin: 5, autoPage: true, autoPageRepeatHeader: false, autoPageSlideStartY: 1.6 });
     });
   }
