@@ -3,9 +3,9 @@ export type ColumnType = "text" | "number" | "date" | "boolean";
 export type DataColumn = { key: string; label: string; type: ColumnType; position: number };
 export type DataRecord = { id: string; data: Record<string, CellValue>; position: number };
 export type Dataset = { id: string; name: string; columns: DataColumn[] };
-export type ChartType = "bar" | "column" | "stacked" | "pie" | "donut" | "line" | "area" | "radar" | "radial" | "treemap" | "funnel" | "scatter";
+export type ChartType = "kpi" | "table" | "map_uf" | "map_points" | "bar" | "column" | "stacked" | "pie" | "donut" | "line" | "area" | "radar" | "radial" | "treemap" | "funnel" | "scatter";
 export const CHART_TYPES: { value: ChartType; label: string }[] = [
-  { value: "bar", label: "Barras horizontais" }, { value: "column", label: "Colunas" }, { value: "stacked", label: "Colunas + linha" }, { value: "pie", label: "Pizza" }, { value: "donut", label: "Rosca" }, { value: "line", label: "Linha" }, { value: "area", label: "Área" }, { value: "radar", label: "Radar" }, { value: "radial", label: "Barras radiais" }, { value: "treemap", label: "Mapa de árvore" }, { value: "funnel", label: "Funil" }, { value: "scatter", label: "Dispersão" },
+  { value: "kpi", label: "Cartão KPI" }, { value: "table", label: "Tabela resumo" }, { value: "map_uf", label: "Mapa por estado (UF)" }, { value: "map_points", label: "Mapa de pontos (lat/long)" }, { value: "bar", label: "Barras horizontais" }, { value: "column", label: "Colunas" }, { value: "stacked", label: "Colunas + linha" }, { value: "pie", label: "Pizza" }, { value: "donut", label: "Rosca" }, { value: "line", label: "Linha" }, { value: "area", label: "Área" }, { value: "radar", label: "Radar" }, { value: "radial", label: "Barras radiais" }, { value: "treemap", label: "Mapa de árvore" }, { value: "funnel", label: "Funil" }, { value: "scatter", label: "Dispersão" },
 ];
 export type DashboardWidget = {
   id: string;
@@ -14,13 +14,14 @@ export type DashboardWidget = {
   chartType: ChartType;
   categoryColumn: string;
   valueColumn: string | null;
-  aggregation: "count" | "sum" | "average" | "min" | "max";
+  aggregation: "count" | "sum" | "average" | "min" | "max" | "unique";
   itemLimit: number;
   position: number;
   isVisible: boolean;
   isFeatured: boolean;
+  layout: { w: 1 | 2 | 3; h: number };
 };
-export type Filters = { busca: string; campos: Record<string, string> };
+export type Filters = { busca: string; campos: Record<string, string>; periodo?: { col: string; de: string; ate: string } };
 export const EMPTY_FILTERS: Filters = { busca: "", campos: {} };
 
 export function cellText(value: CellValue | undefined) {

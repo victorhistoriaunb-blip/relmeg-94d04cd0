@@ -1,0 +1,2 @@
+ALTER TABLE public.dashboard_widgets ADD COLUMN IF NOT EXISTS layout jsonb NOT NULL DEFAULT '{}'::jsonb;
+CREATE INDEX IF NOT EXISTS data_records_user_order_idx ON public.data_records (user_id, dataset_id, position, id);
