@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AjudaRouteImport } from './routes/ajuda'
+import { Route as AnaliseRouteImport } from './routes/analise'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardsRouteImport } from './routes/dashboards'
 import { Route as ApiAnaliseRouteImport } from './routes/api/analise'
@@ -29,6 +30,11 @@ const AdminRoute = AdminRouteImport.update({
 const AjudaRoute = AjudaRouteImport.update({
   id: '/ajuda',
   path: '/ajuda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnaliseRoute = AnaliseRouteImport.update({
+  id: '/analise',
+  path: '/analise',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/ajuda': typeof AjudaRoute
+  '/analise': typeof AnaliseRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboards': typeof DashboardsRoute
   '/api/analise': typeof ApiAnaliseRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/ajuda': typeof AjudaRoute
+  '/analise': typeof AnaliseRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboards': typeof DashboardsRoute
   '/api/analise': typeof ApiAnaliseRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/ajuda': typeof AjudaRoute
+  '/analise': typeof AnaliseRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboards': typeof DashboardsRoute
   '/api/analise': typeof ApiAnaliseRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ajuda'
+    | '/analise'
     | '/configuracoes'
     | '/dashboards'
     | '/api/analise'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ajuda'
+    | '/analise'
     | '/configuracoes'
     | '/dashboards'
     | '/api/analise'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ajuda'
+    | '/analise'
     | '/configuracoes'
     | '/dashboards'
     | '/api/analise'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AjudaRoute: typeof AjudaRoute
+  AnaliseRoute: typeof AnaliseRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardsRoute: typeof DashboardsRoute
   ApiAnaliseRoute: typeof ApiAnaliseRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/ajuda'
       fullPath: '/ajuda'
       preLoaderRoute: typeof AjudaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analise': {
+      id: '/analise'
+      path: '/analise'
+      fullPath: '/analise'
+      preLoaderRoute: typeof AnaliseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AjudaRoute: AjudaRoute,
+  AnaliseRoute: AnaliseRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardsRoute: DashboardsRoute,
   ApiAnaliseRoute: ApiAnaliseRoute,

@@ -26,7 +26,7 @@ Escreva em português do Brasil, em Markdown, com as seções:
 ## Cruzamentos entre planilhas (se houver mais de uma)
 ## Conclusões e recomendações
 ## Referências
-Regras: baseie-se SOMENTE nos dados fornecidos; cite a origem de cada afirmação no formato [Planilha: NOME, #N] ou [Planilha: NOME, coluna X]; quando usar estatísticas agregadas, cite a planilha e a coluna; nunca invente números; deixe claro quando os dados forem insuficientes. Seja objetivo, no máximo ~900 palavras.`;
+Regras: baseie-se SOMENTE nos dados fornecidos; cite a origem de cada afirmação no formato [Planilha: NOME, #N] ou [Planilha: NOME, coluna X]; quando usar estatísticas agregadas, cite a planilha e a coluna; nunca invente números; deixe claro quando os dados forem insuficientes. Não use tabelas Markdown; use listas. Seja objetivo, no máximo ~900 palavras.`;
 
 export const Route = createFileRoute("/api/analise")({
   server: {
