@@ -15,6 +15,13 @@
       "when": 1790475161163,
       "tag": "0001_widgets_combined_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790953510794,
+      "tag": "0002_widget_layout",
+      "breakpoints": true
     }
   ]
 }

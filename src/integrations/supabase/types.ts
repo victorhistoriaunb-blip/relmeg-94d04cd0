@@ -27,6 +27,7 @@ export type Database = {
           is_featured: boolean
           is_visible: boolean
           item_limit: number
+          layout: Json
           position: number
           title: string
           updated_at: string
@@ -45,6 +46,7 @@ export type Database = {
           is_featured?: boolean
           is_visible?: boolean
           item_limit?: number
+          layout?: Json
           position?: number
           title?: string
           updated_at?: string
@@ -63,6 +65,7 @@ export type Database = {
           is_featured?: boolean
           is_visible?: boolean
           item_limit?: number
+          layout?: Json
           position?: number
           title?: string
           updated_at?: string
