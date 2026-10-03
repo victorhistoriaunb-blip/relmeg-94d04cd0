@@ -11,7 +11,11 @@ import { FichaDialog } from "@/components/relmeg/FichaDialog";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
 import { adicionarWidget, editarWidget, excluirWidget, moverWidget, useRelmeg } from "@/lib/relmeg/store";
-import { agregar } from "@/lib/relmeg/report";
+import { agregar, fmtNum, registrosDe, valorKpi, ufDe, UFS, perfilBase, sugestoes, MODELOS, montarModelo } from "@/lib/relmeg/engine";
+import { aplicarSugestoes } from "@/lib/relmeg/store";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { cellText } from "@/lib/relmeg/types";
+import { Maximize2, Minimize2, LayoutTemplate, Sparkles, Download } from "lucide-react";
 import { CHART_TYPES, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/dashboards")({
@@ -38,10 +42,11 @@ const tip = {
   cursor: { fill: "oklch(0.42 0.055 258)", opacity: 0.3 },
 };
 const tick = { fill: EIXO, fontSize: 12 };
-const AGG: Record<DashboardWidget["aggregation"], string> = { count: "Contagem", sum: "Soma", average: "Média", min: "Mínimo", max: "Máximo" };
+const AGG: Record<DashboardWidget["aggregation"], string> = { count: "Contagem", unique: "Valores únicos", sum: "Soma", average: "Média", min: "Mínimo", max: "Máximo" };
 
-function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRecord[]; width?: number; height?: number }): ReactElement {
-  const d = agregar(data, w);
+function Grafico({ w, data, columns, onPick, width, height }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; onPick: (n: string) => void; width?: number; height?: number }): ReactElement {
+  const d = agregar(data, w, { columns });
+  const pick = (e: unknown) => { const o = e as { name?: string; payload?: { name?: string } } | null; const n = o?.payload?.name ?? o?.name; if (n) onPick(String(n)); };
   const size = width !== undefined && height !== undefined ? { width, height } : {};
   const cores = d.map((e, i) => <Cell key={e.name} fill={CORES[i % CORES.length]} />);
   switch (w.chartType) {
@@ -49,7 +54,7 @@ function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRec
     case "donut":
       return (
         <PieChart {...size}>
-          <Pie data={d} dataKey="total" nameKey="name" innerRadius={w.chartType === "donut" ? 60 : 0} outerRadius={100} paddingAngle={w.chartType === "donut" ? 2 : 0}>{cores}</Pie>
+          <Pie onClick={pick} data={d} dataKey="total" nameKey="name" innerRadius={w.chartType === "donut" ? 60 : 0} outerRadius={100} paddingAngle={w.chartType === "donut" ? 2 : 0}>{cores}</Pie>
           <Legend wrapperStyle={{ fontSize: 12, color: EIXO }} />
           <Tooltip {...tip} />
         </PieChart>
@@ -59,26 +64,26 @@ function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRec
       return w.chartType === "line" ? (
         <LineChart data={d} {...size}>
           <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
-          <Line dataKey="total" stroke={CORES[0]} strokeWidth={2} />
+          <Line onClick={pick} dataKey="total" stroke={CORES[0]} strokeWidth={2} activeDot={{ onClick: (_: unknown, e: unknown) => pick(e) }} />
         </LineChart>
       ) : (
         <AreaChart data={d} {...size}>
           <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
-          <Area dataKey="total" stroke={CORES[0]} fill={CORES[0]} fillOpacity={0.3} strokeWidth={2} />
+          <Area onClick={pick} dataKey="total" stroke={CORES[0]} fill={CORES[0]} fillOpacity={0.3} strokeWidth={2} activeDot={{ onClick: (_: unknown, e: unknown) => pick(e) }} />
         </AreaChart>
       );
     case "column":
       return (
         <BarChart data={d} {...size}>
           <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
-          <Bar dataKey="total" radius={[4, 4, 0, 0]}>{cores}</Bar>
+          <Bar dataKey="total" radius={[4, 4, 0, 0]} onClick={pick}>{cores}</Bar>
         </BarChart>
       );
     case "stacked":
       return (
         <ComposedChart data={d} {...size}>
           <CartesianGrid vertical={false} stroke={GRADE} /><XAxis dataKey="name" stroke={EIXO} tick={tick} /><YAxis stroke={EIXO} tick={tick} /><Tooltip {...tip} />
-          <Bar dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
+          <Bar onClick={pick} dataKey="total" fill={CORES[1]} radius={[4, 4, 0, 0]} />
           <Line dataKey="total" stroke={CORES[3]} strokeWidth={2} />
         </ComposedChart>
       );
@@ -92,14 +97,14 @@ function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRec
     case "radial":
       return (
         <RadialBarChart data={d.map((x, i) => ({ ...x, fill: CORES[i % CORES.length] }))} innerRadius={30} outerRadius={120} {...size}>
-          <RadialBar dataKey="total" background={{ fill: GRADE }} />
+          <RadialBar onClick={pick} dataKey="total" background={{ fill: GRADE }} />
           <Legend wrapperStyle={{ fontSize: 12, color: EIXO }} />
           <Tooltip {...tip} />
         </RadialBarChart>
       );
     case "treemap":
       return (
-        <Treemap data={d.map((x, i) => ({ ...x, fill: CORES[i % CORES.length] }))} dataKey="total" nameKey="name" stroke="oklch(0.18 0.03 264)" {...size}>
+        <Treemap onClick={pick} data={d.map((x, i) => ({ ...x, fill: CORES[i % CORES.length] }))} dataKey="total" nameKey="name" stroke="oklch(0.18 0.03 264)" {...size}>
           <Tooltip {...tip} />
         </Treemap>
       );
@@ -107,21 +112,21 @@ function Grafico({ w, data, width, height }: { w: DashboardWidget; data: DataRec
       return (
         <FunnelChart {...size}>
           <Tooltip {...tip} />
-          <Funnel data={d} dataKey="total" nameKey="name" isAnimationActive>{cores}<LabelList position="right" dataKey="name" fill={EIXO} stroke="none" fontSize={12} /></Funnel>
+          <Funnel onClick={pick} data={d} dataKey="total" nameKey="name" isAnimationActive>{cores}<LabelList position="right" dataKey="name" fill={EIXO} stroke="none" fontSize={12} /></Funnel>
         </FunnelChart>
       );
     case "scatter":
       return (
         <ScatterChart {...size}>
           <CartesianGrid stroke={GRADE} /><XAxis dataKey="name" type="category" allowDuplicatedCategory={false} stroke={EIXO} tick={tick} /><YAxis dataKey="total" stroke={EIXO} tick={tick} /><Tooltip {...tip} />
-          <Scatter data={d} fill={CORES[0]}>{cores}</Scatter>
+          <Scatter onClick={pick} data={d} fill={CORES[0]}>{cores}</Scatter>
         </ScatterChart>
       );
     default:
       return (
         <BarChart data={d} layout="vertical" margin={{ left: 8, right: 16 }} {...size}>
           <CartesianGrid horizontal={false} stroke={GRADE} /><XAxis type="number" stroke={EIXO} tick={tick} /><YAxis type="category" dataKey="name" width={120} stroke={EIXO} tick={tick} /><Tooltip {...tip} />
-          <Bar dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
+          <Bar onClick={pick} dataKey="total" fill={CORES[0]} radius={[0, 4, 4, 0]} />
         </BarChart>
       );
   }
