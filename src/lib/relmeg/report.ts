@@ -1,3 +1,4 @@
+import { agregar as motorAgregar } from "./engine";
 
 /* --------------------------------- Logo ---------------------------------- */
 
@@ -31,18 +32,7 @@ import { cellText } from "./types";
 export type FichaConfig = { titulo: string; subtitulo: string; incluirCapa: boolean; incluirFiltros: boolean; incluirIndicadores: boolean; incluirGraficos: boolean; incluirPerfis: boolean; campos: string[]; limite: number };
 export const FICHA_PADRAO: FichaConfig = { titulo: "Ficha de Estudo", subtitulo: "RelMeg — Inteligência Legislativa", incluirCapa: true, incluirFiltros: true, incluirIndicadores: true, incluirGraficos: true, incluirPerfis: true, campos: [], limite: 50 };
 
-export function agregar(data: DataRecord[], w: Pick<DashboardWidget, "categoryColumn" | "valueColumn" | "aggregation" | "itemLimit">) {
-  const g = new Map<string, number[]>();
-  for (const r of data) {
-    const cat = cellText(r.data[w.categoryColumn]).trim(); if (!cat) continue;
-    const raw: CellValue | undefined = w.valueColumn ? r.data[w.valueColumn] : 1;
-    const n = typeof raw === "number" ? raw : Number(raw);
-    if (!g.has(cat)) g.set(cat, []);
-    if (w.aggregation === "count" || Number.isFinite(n)) g.get(cat)!.push(w.aggregation === "count" ? 1 : n);
-  }
-  const f = (v: number[]) => !v.length ? 0 : w.aggregation === "sum" || w.aggregation === "count" ? v.reduce((a, b) => a + b, 0) : w.aggregation === "average" ? v.reduce((a, b) => a + b, 0) / v.length : w.aggregation === "min" ? Math.min(...v) : Math.max(...v);
-  return [...g.entries()].map(([name, v]) => ({ name, total: Math.round(f(v) * 100) / 100 })).sort((a, b) => b.total - a.total).slice(0, w.itemLimit || 10);
-}
+export function agregar(data: DataRecord[], w: Pick<DashboardWidget, "categoryColumn" | "valueColumn" | "aggregation" | "itemLimit">, columns?: DataColumn[]) { return motorAgregar(data, w, { columns, outros: true, vazios: false }); }
 export function filtrosAtivos(filters: Filters, columns: DataColumn[]) {
   const out: { label: string; valor: string }[] = []; if (filters.busca) out.push({ label: "Busca", valor: filters.busca });
   for (const [k, v] of Object.entries(filters.campos)) if (v) out.push({ label: columns.find((c) => c.key === k)?.label ?? k, valor: v });
