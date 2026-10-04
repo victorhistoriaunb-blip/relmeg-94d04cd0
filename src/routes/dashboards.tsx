@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
 import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -294,6 +295,19 @@ function DrillDialog({ alvo, columns, onClose }: { alvo: { titulo: string; regs:
   );
 }
 
+function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[] }) {
+  const [busy, setBusy] = useState(false);
+  const gerar = async () => {
+    setBusy(true);
+    try {
+      const p = perfilBase(data, columns); const vistos = new Set<string>();
+      const lista = [...montarModelo("executivo", p), ...sugestoes(p)].filter((s) => { const k = `${s.chartType}|${s.categoryColumn}|${s.aggregation ?? "count"}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
+      await aplicarSugestoes(lista); toast.success(`Dashboard automático criado com ${lista.length} componentes`);
+    } catch { toast.error("Não foi possível gerar o dashboard automático"); } finally { setBusy(false); }
+  };
+  return <Button onClick={gerar} disabled={busy}><Sparkles />{busy ? "Gerando…" : "Gerar dashboard automático"}</Button>;
+}
+
 function Modelos({ data, columns }: { data: DataRecord[]; columns: DataColumn[] }) {
   const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false);
   const perfil = useMemo(() => open ? perfilBase(data, columns) : null, [open, data, columns]);
@@ -350,6 +364,7 @@ function Dashboards() {
         </div>
         {dataset && (
           <div className="flex flex-wrap gap-2">
+            <AutoDash data={data} columns={columns} />
             <Modelos data={data} columns={columns} />
             <Button variant="outline" onClick={() => adicionarWidget()}><Plus />Novo componente</Button>
             <FichaDialog data={filtrados} columns={columns} widgets={widgets.filter((w) => !["kpi", "table", "map_uf", "map_points"].includes(w.chartType))} filters={filters} />
