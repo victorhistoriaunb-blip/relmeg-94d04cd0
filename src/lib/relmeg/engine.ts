@@ -39,7 +39,7 @@ export function categoria(r: DataRecord, col: DataColumn | undefined, key: strin
   return t || VAZIO;
 }
 
-type Opts = { outros?: boolean; vazios?: boolean; columns?: DataColumn[] };
+type Opts = { outros?: boolean; vazios?: boolean; columns?: DataColumn[] | undefined };
 export type Ponto = { name: string; total: number; registros: number };
 
 export function agregar(data: DataRecord[], w: Pick<DashboardWidget, "categoryColumn" | "valueColumn" | "aggregation" | "itemLimit"> & { chartType?: string }, opts: Opts = {}): Ponto[] {
@@ -140,7 +140,7 @@ export function perfilBase(data: DataRecord[], columns: DataColumn[]) {
 }
 
 /* ---------- Sugestões e modelos ---------- */
-export type Sugestao = Partial<DashboardWidget> & { categoryColumn: string; title: string };
+export type Sugestao = Omit<Partial<DashboardWidget>, "layout"> & { categoryColumn: string; title: string; layout?: DashboardWidget["layout"] };
 export function sugestoes(perfil: ReturnType<typeof perfilBase>): Sugestao[] {
   const by = (p: Papel) => perfil.cols.filter((c) => c.papel === p);
   const out: Sugestao[] = [];
@@ -175,7 +175,7 @@ export function montarModelo(id: string, perfil: ReturnType<typeof perfilBase>):
   const lat = by("lat")[0], lng = by("lng")[0]; const first = perfil.cols[0]?.col.key ?? "";
   const kpiTotal: Sugestao = { title: "Registros analisados", chartType: "kpi", aggregation: "count", categoryColumn: first, layout: { w: 1, h: 240 } };
   const tempo = (t: DashboardWidget["chartType"]): Sugestao[] => datas.slice(0, 1).map((d) => ({ title: `Evolução — ${d.col.label}`, chartType: t, categoryColumn: d.col.key, itemLimit: 60, layout: { w: 2, h: 320 } }));
-  const cat = (t: DashboardWidget["chartType"], n: number, w: 1 | 2 | 3 = 1): Sugestao[] => cats.slice(0, n).map((c) => ({ title: `Quantidade por ${c.col.label}`, chartType: t, categoryColumn: c.col.key, layout: { w, h: 320 } }));
+  const cat = (t: DashboardWidget["chartType"], n: number, w: 1 | 2 | 3 = 1): Sugestao[] => cats.slice(0, n).map((c) => ({ title: `Quantidade por ${c.col.label}`, chartType: t, categoryColumn: c.col.key, layout: { w, h: 320 } } as Sugestao));
   const kpiNums: Sugestao[] = nums.slice(0, 2).map((c) => ({ title: `Total de ${c.col.label}`, chartType: "kpi", aggregation: "sum", valueColumn: c.col.key, categoryColumn: c.col.key, layout: { w: 1, h: 240 } }));
   const kpiUnicos: Sugestao[] = cats.slice(0, 2).map((c) => ({ title: `${c.col.label} distintos`, chartType: "kpi", aggregation: "unique", valueColumn: c.col.key, categoryColumn: c.col.key, layout: { w: 1, h: 240 } }));
   const geo: Sugestao[] = [
