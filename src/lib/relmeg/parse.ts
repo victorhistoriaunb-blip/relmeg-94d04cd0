@@ -29,8 +29,10 @@ function convert(value: unknown, type: ColumnType): CellValue {
 }
 
 export async function parseFile(file: File): Promise<ParseResult> {
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array", raw: true, cellDates: true });
+  const csv = /\.(csv|txt)$/i.test(file.name);
+  const workbook = csv
+    ? XLSX.read(await file.text(), { type: "string", raw: true, cellDates: true })
+    : XLSX.read(await file.arrayBuffer(), { type: "array", raw: true, cellDates: true });
   const sheetName = workbook.SheetNames[0] ?? "Dados";
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) return { rows: [], headers: [], columns: [], sheetName };
