@@ -192,7 +192,7 @@ export function montarModelo(id: string, perfil: ReturnType<typeof perfilBase>):
     case "categorias": return [kpiTotal, ...cat("donut", 2), ...cat("bar", 4).slice(2)];
     case "comparacao": return [...cat("column", 2, 2), ...cat("radar", 1)];
     case "tendencias": return [...tempo("line"), ...tempo("stacked")];
-    case "tabela": return [...cat("table", 1).map((s): Sugestao => ({ ...s, itemLimit: 25, layout: { w: 1, h: 480 } })), ...cat("bar", 2)];
+    case "tabela": return [...cat("table", 1).map((s) => ({ ...s, itemLimit: 25, layout: { w: 1 as const, h: 480 } })), ...cat("bar", 2)] as Sugestao[];
     case "midia": return [kpiTotal, ...tempo("area"), ...cat("bar", 4), ...geo.slice(0, 1)];
     case "volume": return [kpiTotal, ...kpiUnicos.slice(0, 1), ...cat("table", 2), ...tempo("column")];
     default: return [kpiTotal, ...kpiUnicos.slice(0, 1), ...kpiNums.slice(0, 1), ...tempo("area"), ...cat("bar", 2), ...geo.slice(0, 1)];
