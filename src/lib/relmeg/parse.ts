@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import type { CellValue, ColumnType, DataColumn } from "./types";
 
 export type ParsedRow = Record<string, CellValue>;
-export type ParseResult = { rows: ParsedRow[]; headers: string[]; columns: DataColumn[]; sheetName: string; fileName?: string };
+export type ParseResult = { rows: ParsedRow[]; headers: string[]; columns: DataColumn[]; sheetName: string; fileName?: string; ignoradas?: number };
 
 function keyFor(label: string, index: number) {
   const clean = label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -29,8 +29,10 @@ function convert(value: unknown, type: ColumnType): CellValue {
 }
 
 export async function parseFile(file: File): Promise<ParseResult> {
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array", raw: true, cellDates: true });
+  const csv = /\.(csv|txt)$/i.test(file.name);
+  const workbook = csv
+    ? XLSX.read(await file.text(), { type: "string", raw: true, cellDates: true })
+    : XLSX.read(await file.arrayBuffer(), { type: "array", raw: true, cellDates: true });
   const sheetName = workbook.SheetNames[0] ?? "Dados";
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) return { rows: [], headers: [], columns: [], sheetName };
@@ -40,5 +42,5 @@ export async function parseFile(file: File): Promise<ParseResult> {
   const body = matrix.slice(1).filter((row) => row.some((v) => v !== "" && v !== null && v !== undefined));
   const columns = headers.map((label, i) => ({ key: keyFor(label, i), label, type: inferType(body.map((r) => r[i])), position: i }));
   const rows = body.map((row) => Object.fromEntries(columns.map((c, i) => [c.key, convert(row[i], c.type)])));
-  return { rows, headers, columns, sheetName, fileName: file.name.replace(/\.[^.]+$/, "") };
+  return { rows, headers, columns, sheetName, ignoradas: matrix.length - 1 - body.length, fileName: file.name.replace(/\.[^.]+$/, "") };
 }
