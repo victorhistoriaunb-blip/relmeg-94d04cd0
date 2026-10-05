@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
 import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
@@ -17,7 +17,7 @@ import { aplicarSugestoes } from "@/lib/relmeg/store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cellText } from "@/lib/relmeg/types";
 import { Maximize2, Minimize2, LayoutTemplate, Sparkles, Download } from "lucide-react";
-import { CHART_TYPES, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
+import { CHART_TYPES, type ChartType, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -296,16 +296,38 @@ function DrillDialog({ alvo, columns, onClose }: { alvo: { titulo: string; regs:
 }
 
 function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[] }) {
-  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false); const [tipos, setTipos] = useState<Set<ChartType>>(new Set());
+  const lista = useMemo(() => {
+    if (!open) return [];
+    const p = perfilBase(data, columns); const vistos = new Set<string>();
+    return [...montarModelo("executivo", p), ...sugestoes(p)].filter((s) => { const k = `${s.chartType}|${s.categoryColumn}|${s.aggregation ?? "count"}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
+  }, [open, data, columns]);
+  const grupos = useMemo(() => { const m = new Map<ChartType, number>(); for (const s of lista) { const t = (s.chartType ?? "bar") as ChartType; m.set(t, (m.get(t) ?? 0) + 1); } return [...m.entries()]; }, [lista]);
+  useEffect(() => { if (open) setTipos(new Set(grupos.map(([t]) => t))); }, [open, grupos]);
   const gerar = async () => {
     setBusy(true);
     try {
-      const p = perfilBase(data, columns); const vistos = new Set<string>();
-      const lista = [...montarModelo("executivo", p), ...sugestoes(p)].filter((s) => { const k = `${s.chartType}|${s.categoryColumn}|${s.aggregation ?? "count"}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
-      await aplicarSugestoes(lista); toast.success(`Dashboard automático criado com ${lista.length} componentes`);
+      const sel = lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType));
+      await aplicarSugestoes(sel); setOpen(false); toast.success(`Dashboard automático criado com ${sel.length} componentes`);
     } catch { toast.error("Não foi possível gerar o dashboard automático"); } finally { setBusy(false); }
   };
-  return <Button onClick={gerar} disabled={busy}><Sparkles />{busy ? "Gerando…" : "Gerar dashboard automático"}</Button>;
+  const alternar = (t: ChartType) => setTipos((prev) => { const n = new Set(prev); if (n.has(t)) n.delete(t); else n.add(t); return n; });
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button><Sparkles />Gerar dashboard automático</Button></DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle className="font-display">Dashboard automático</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">Escolha quais tipos de gráfico incluir. Os componentes são adicionados ao final do painel e podem ser editados, movidos e excluídos depois.</p>
+        <div className="grid grid-cols-2 gap-2">
+          {grupos.map(([t, n]) => { const ativo = tipos.has(t); return (
+            <button key={t} type="button" onClick={() => alternar(t)} className={`flex items-center justify-between gap-2 rounded-md border p-2 text-left text-sm transition-colors ${ativo ? "border-primary bg-primary/10" : "border-border opacity-60"}`}>
+              <span>{CHART_TYPES.find((c) => c.value === t)?.label ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
+            </button>); })}
+        </div>
+        <Button onClick={gerar} disabled={busy || tipos.size === 0}><Sparkles />{busy ? "Gerando…" : `Adicionar ${lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType)).length} componentes`}</Button>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function Modelos({ data, columns }: { data: DataRecord[]; columns: DataColumn[] }) {
