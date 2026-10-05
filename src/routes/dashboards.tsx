@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ReactElement } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, ReactElement } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
-import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical, ArrowLeft, X, Minus, Search, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,12 +12,13 @@ import { FichaDialog } from "@/components/relmeg/FichaDialog";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
 import { adicionarWidget, editarWidget, excluirWidget, moverWidget, useRelmeg } from "@/lib/relmeg/store";
-import { agregar, fmtNum, registrosDe, valorKpi, ufDe, UFS, perfilBase, sugestoes, MODELOS, montarModelo } from "@/lib/relmeg/engine";
+import { agregar, fmtNum, registrosDe, valorKpi, ufDe, UFS, perfilBase, sugestoes, MODELOS, montarModelo, type Sugestao } from "@/lib/relmeg/engine";
 import { aplicarSugestoes } from "@/lib/relmeg/store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cellText } from "@/lib/relmeg/types";
 import { Maximize2, Minimize2, LayoutTemplate, Sparkles, Download } from "lucide-react";
 import { CHART_TYPES, type ChartType, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
+import brasilUf from "@/assets/brasil-uf.json";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -170,6 +171,210 @@ function MapaPontos({ w, data }: { w: DashboardWidget; data: DataRecord[] }) {
   );
 }
 
+type UfForma = { uf: string; nome: string; d: string; x0: number; y0: number; x1: number; y1: number };
+type Vista = { k: number; x: number; y: number };
+
+const RAD = Math.PI / 180;
+const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * RAD) / 2));
+const VB = { w: 640, h: 700 };
+const PAD = 16;
+const MIN_K = 1;
+const MAX_K = 26;
+const REGIAO_UF: Record<string, string> = { AC: "Norte", AM: "Norte", AP: "Norte", PA: "Norte", RO: "Norte", RR: "Norte", TO: "Norte", AL: "Nordeste", BA: "Nordeste", CE: "Nordeste", MA: "Nordeste", PB: "Nordeste", PE: "Nordeste", PI: "Nordeste", RN: "Nordeste", SE: "Nordeste", DF: "Centro-Oeste", GO: "Centro-Oeste", MT: "Centro-Oeste", MS: "Centro-Oeste", ES: "Sudeste", MG: "Sudeste", RJ: "Sudeste", SP: "Sudeste", PR: "Sul", RS: "Sul", SC: "Sul" };
+const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
+const ufsDaRegiao = (r: string) => Object.keys(REGIAO_UF).filter((u) => REGIAO_UF[u] === r);
+
+const TRACADO = (brasilUf as unknown as { uf: string; nome: string; polys: [number, number][][][] }[]).map((u) => ({
+  uf: u.uf,
+  nome: u.nome,
+  aneis: u.polys.flatMap((p) => p.map((r) => r.map(([lon, lat]) => [lon * RAD, -mercY(lat)] as [number, number]))),
+}));
+
+const LIMITES = (() => {
+  const b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  for (const u of TRACADO) for (const a of u.aneis) for (const [x, y] of a) { if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x; if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y; }
+  return b;
+})();
+const ESC = Math.min((VB.w - PAD * 2) / (LIMITES.x1 - LIMITES.x0), (VB.h - PAD * 2) / (LIMITES.y1 - LIMITES.y0));
+const OX = (VB.w - (LIMITES.x1 - LIMITES.x0) * ESC) / 2 - LIMITES.x0 * ESC;
+const OY = (VB.h - (LIMITES.y1 - LIMITES.y0) * ESC) / 2 - LIMITES.y0 * ESC;
+
+const FORMAS: UfForma[] = TRACADO.map((u) => {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const d = u.aneis.map((r) => "M" + r.map(([lo, la]) => {
+    const x = lo * ESC + OX; const y = la * ESC + OY;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    return `${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join("L") + "Z").join("");
+  return { uf: u.uf, nome: u.nome, d, x0, y0, x1, y1 };
+});
+
+const clampVista = (v: Vista): Vista => ({ k: v.k, x: Math.max(VB.w - VB.w * v.k, Math.min(0, v.x)), y: Math.max(VB.h - VB.h * v.k, Math.min(0, v.y)) });
+const zoomEm = (v: Vista, px: number, py: number, f: number): Vista => {
+  const k = Math.max(MIN_K, Math.min(MAX_K, v.k * f));
+  const r = k / v.k;
+  return clampVista({ k, x: px - (px - v.x) * r, y: py - (py - v.y) * r });
+};
+
+function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; onPick: (n: string) => void }) {
+  const rotulo = columns.find((c) => c.key === w.categoryColumn)?.label ?? "UF";
+  const [vista, setVista] = useState<Vista>({ k: 1, x: 0, y: 0 });
+  const [sel, setSel] = useState<string | null>(null);
+  const [pasa, setPasa] = useState<{ nome: string; total: number } | null>(null);
+  const svg = useRef<SVGSVGElement | null>(null);
+  const ptrs = useRef(new Map<number, { x: number; y: number }>());
+  const arr = useRef<{ x: number; y: number } | null>(null);
+  const pin = useRef<number | null>(null);
+  const moveu = useRef(0);
+
+  const tot = useMemo(() => {
+    const m = new Map<string, { total: number; nome: string }>();
+    for (const p of agregar(data, { ...w, chartType: "map_brasil", itemLimit: 9999 })) {
+      const uf = ufDe(p.name); if (!uf) continue;
+      const e = m.get(uf) ?? { total: 0, nome: p.name };
+      e.total += p.total; m.set(uf, e);
+    }
+    return m;
+  }, [data, w]);
+  const max = Math.max(1, ...[...tot.values()].map((e) => e.total));
+  const sem = useMemo(() => data.filter((r) => !ufDe(r.data[w.categoryColumn])).length, [data, w]);
+
+  const paraSvg = (cx: number, cy: number) => {
+    const el = svg.current; if (!el) return null;
+    const ctm = el.getScreenCTM(); if (!ctm) return null;
+    const p = new DOMPoint(cx, cy).matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
+  };
+  const encherUfs = (ufs: string[]) => {
+    const fs = FORMAS.filter((f) => ufs.includes(f.uf));
+    if (!fs.length) return;
+    const x0 = Math.min(...fs.map((f) => f.x0)); const x1 = Math.max(...fs.map((f) => f.x1));
+    const y0 = Math.min(...fs.map((f) => f.y0)); const y1 = Math.max(...fs.map((f) => f.y1));
+    const k = Math.max(MIN_K, Math.min(MAX_K, 0.82 * Math.min(VB.w / Math.max(1, x1 - x0), VB.h / Math.max(1, y1 - y0))));
+    setVista(clampVista({ k, x: VB.w / 2 - ((x0 + x1) / 2) * k, y: VB.h / 2 - ((y0 + y1) / 2) * k }));
+  };
+
+  useEffect(() => {
+    const el = svg.current; if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const p = paraSvg(e.clientX, e.clientY); if (!p) return;
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      setVista((v) => zoomEm(v, p.x, p.y, Math.exp(-dy * 0.0018)));
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!ptrs.current.has(e.pointerId)) return;
+      const antes = ptrs.current.get(e.pointerId);
+      ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (antes) moveu.current += Math.hypot(e.clientX - antes.x, e.clientY - antes.y);
+      if (ptrs.current.size >= 2) {
+        const v = [...ptrs.current.values()]; const a = v[0]; const b = v[1];
+        if (!a || !b) return;
+        const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        const m = paraSvg((a.x + b.x) / 2, (a.y + b.y) / 2);
+        const de = pin.current;
+        if (de && m) setVista((prev) => zoomEm(prev, m.x, m.y, dist / de));
+        pin.current = dist;
+        return;
+      }
+      if (arr.current) {
+        e.preventDefault();
+        const ctm = svg.current?.getScreenCTM();
+        const sx = ctm?.a || 1; const sy = ctm?.d || 1;
+        const dx = (e.clientX - arr.current.x) / sx; const dy = (e.clientY - arr.current.y) / sy;
+        arr.current = { x: e.clientX, y: e.clientY };
+        setVista((prev) => clampVista({ k: prev.k, x: prev.x + dx, y: prev.y + dy }));
+      }
+    };
+    const onUp = (e: PointerEvent) => {
+      ptrs.current.delete(e.pointerId);
+      if (ptrs.current.size < 2) pin.current = null;
+      if (ptrs.current.size === 0) arr.current = null;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, []);
+
+  const aoPressionar = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    moveu.current = 0;
+    if (ptrs.current.size === 1) arr.current = { x: e.clientX, y: e.clientY };
+    else if (ptrs.current.size === 2) {
+      const v = [...ptrs.current.values()]; const a = v[0]; const b = v[1];
+      if (a && b) pin.current = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      arr.current = null;
+    }
+  };
+  const aoTecla = (e: ReactKeyboardEvent<SVGSVGElement>) => {
+    const passo = 60 / vista.k;
+    if (e.key === "+" || e.key === "=") { e.preventDefault(); setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1.4)); }
+    else if (e.key === "-" || e.key === "_") { e.preventDefault(); setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1 / 1.4)); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); setVista((v) => clampVista({ ...v, x: v.x + passo })); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); setVista((v) => clampVista({ ...v, x: v.x - passo })); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setVista((v) => clampVista({ ...v, y: v.y + passo })); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); setVista((v) => clampVista({ ...v, y: v.y - passo })); }
+    else if (e.key === "Escape" || e.key === "0") { setSel(null); setVista({ k: 1, x: 0, y: 0 }); }
+  };
+  const reiniciar = () => { setSel(null); setVista({ k: 1, x: 0, y: 0 }); };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button size="sm" variant={vista.k === 1 ? "default" : "outline"} onClick={reiniciar}>Brasil</Button>
+        {REGIOES.map((r) => <Button key={r} size="sm" variant="outline" onClick={() => { setSel(null); encherUfs(ufsDaRegiao(r)); }}>{r}</Button>)}
+        <div className="ml-auto flex items-center gap-1">
+          <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Aproximar" onClick={() => setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1.5))}><Plus className="h-3.5 w-3.5" /></Button>
+          <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Afastar" onClick={() => setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1 / 1.5))}><Minus className="h-3.5 w-3.5" /></Button>
+          <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Ver o Brasil inteiro" onClick={reiniciar}><Maximize className="h-3.5 w-3.5" /></Button>
+        </div>
+      </div>
+      <div className="relative mt-2 min-h-0 flex-1 overflow-hidden rounded-lg border border-border">
+        <svg ref={svg} viewBox={`0 0 ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid meet" className="h-full w-full touch-none select-none" role="img" aria-label={`Mapa do Brasil por ${rotulo}`} onPointerDown={aoPressionar} tabIndex={0} onKeyDown={aoTecla}>
+          <g transform={`translate(${vista.x} ${vista.y}) scale(${vista.k})`}>
+            {FORMAS.map((f) => {
+              const e = tot.get(f.uf);
+              const a = e ? 0.18 + 0.82 * (e.total / max) : 0;
+              return (
+                <path key={f.uf} d={f.d}
+                  onClick={() => { if (moveu.current > 6) return; setSel(f.uf); encherUfs([f.uf]); }}
+                  onPointerEnter={() => setPasa({ nome: f.nome, total: e?.total ?? 0 })}
+                  onPointerLeave={() => setPasa(null)}
+                  fill={e ? `oklch(0.66 0.17 255 / ${a.toFixed(3)})` : "oklch(0.26 0.03 264)"}
+                  stroke={sel === f.uf ? "oklch(0.96 0.01 250)" : "oklch(0.46 0.05 262)"}
+                  strokeWidth={sel === f.uf ? 2 : 0.8}
+                  vectorEffect="non-scaling-stroke"
+                  className="cursor-pointer transition-[fill,stroke] duration-150">
+                  <title>{`${f.nome}: ${e ? fmtNum(e.total) : 0}`}</title>
+                </path>
+              );
+            })}
+          </g>
+        </svg>
+        <div className="pointer-events-none absolute right-2 top-2 rounded-md border border-border bg-card/90 px-2 py-1 text-[11px] text-muted-foreground">{vista.k > 1.05 ? `Zoom ${fmtNum(Math.round(vista.k * 10) / 10)}×` : "Roda, pinça ou +/− para dar zoom"}</div>
+        {pasa && <div className="pointer-events-none absolute bottom-2 left-2 rounded-md border border-border bg-card/95 px-2 py-1 text-xs"><span className="font-semibold">{pasa.nome}</span><span className="text-muted-foreground"> · {fmtNum(pasa.total)}</span></div>}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-foreground">{fmtNum(data.length - sem)} de {fmtNum(data.length)} registros com UF</span>
+        <span className="flex items-center gap-1">
+          <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255 / 0.18)" }} />0
+          <span className="ml-1 h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255)" }} />{fmtNum(max)}
+        </span>
+        {sel && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)?.nome ?? sel)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
+        {sem > 0 && <span>{fmtNum(sem)} sem UF reconhecida</span>}
+      </div>
+    </div>
+  );
+}
+
 function Componente({ w, data, columns, onPick, onAll }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; onPick: (n: string) => void; onAll: () => void }) {
   if (w.chartType === "kpi") {
     const v = valorKpi(data, w);
@@ -179,6 +384,7 @@ function Componente({ w, data, columns, onPick, onAll }: { w: DashboardWidget; d
     const d = agregar(data, w, { columns }); const total = d.reduce((a, b) => a + b.total, 0);
     return <div className="h-full overflow-auto"><table className="w-full text-sm"><thead className="sticky top-0 bg-card text-left text-xs text-muted-foreground"><tr><th className="py-1.5">{columns.find((c) => c.key === w.categoryColumn)?.label}</th><th className="text-right">{AGG[w.aggregation]}</th><th className="text-right">%</th></tr></thead><tbody>{d.map((p) => <tr key={p.name} onClick={() => onPick(p.name)} className="cursor-pointer border-t border-border hover:bg-secondary/40"><td className="py-1.5 pr-2">{p.name}</td><td className="text-right tabular-nums">{fmtNum(p.total)}</td><td className="text-right tabular-nums text-muted-foreground">{total ? fmtNum((p.total / total) * 100) : 0}%</td></tr>)}</tbody></table></div>;
   }
+  if (w.chartType === "map_brasil") return <MapaBrasil w={w} data={data} columns={columns} onPick={onPick} />;
   if (w.chartType === "map_uf") return <MapaUF w={w} data={data} onPick={onPick} />;
   if (w.chartType === "map_points") return <MapaPontos w={w} data={data} />;
   return <ResponsiveContainer width="100%" height="100%"><Grafico w={w} data={data} columns={columns} onPick={onPick} /></ResponsiveContainer>;
@@ -214,7 +420,7 @@ function Editor({ w, columns }: { w: DashboardWidget; columns: DataColumn[] }) {
             <SelectContent>{(w.aggregation === "unique" ? columns : nums).map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}</SelectContent>
           </Select>
         )}
-        {w.chartType !== "kpi" && <Input aria-label="Máximo de categorias" type="number" min={1} max={200} value={w.itemLimit} onChange={(e) => editarWidget(w.id, { itemLimit: Math.max(1, Math.min(200, Number(e.target.value) || 10)) })} />}
+        {w.chartType !== "kpi" && !w.chartType.startsWith("map_") && <Input aria-label="Máximo de categorias" type="number" min={1} max={200} value={w.itemLimit} onChange={(e) => editarWidget(w.id, { itemLimit: Math.max(1, Math.min(200, Number(e.target.value) || 10)) })} />}
       </>)}
     </div>
   );
@@ -295,19 +501,64 @@ function DrillDialog({ alvo, columns, onClose }: { alvo: { titulo: string; regs:
   );
 }
 
+const chaveDe = (s: Sugestao) => `${s.chartType ?? "bar"}|${s.categoryColumn}|${s.aggregation ?? "count"}`;
+
+function widgetDeSugestao(s: Sugestao, i: number): DashboardWidget {
+  return {
+    id: `previa-${i}`,
+    title: s.title,
+    description: "",
+    chartType: (s.chartType ?? "bar") as ChartType,
+    categoryColumn: s.categoryColumn,
+    valueColumn: s.valueColumn ?? null,
+    aggregation: s.aggregation ?? "count",
+    itemLimit: s.itemLimit ?? 10,
+    position: i,
+    isVisible: true,
+    isFeatured: false,
+    layout: s.layout ?? { w: 1, h: 260 },
+  };
+}
+
+const ALT_PREVIA = (t: ChartType) => (t === "kpi" ? 120 : t === "map_uf" || t === "map_brasil" ? 360 : t === "table" ? 240 : 220);
+
+function PreviaComponente({ s, i, data, columns, onRemover }: { s: Sugestao; i: number; data: DataRecord[]; columns: DataColumn[]; onRemover: () => void }) {
+  const w = useMemo(() => widgetDeSugestao(s, i), [s, i]);
+  const tipo = CHART_TYPES.find((c) => c.value === w.chartType)?.label ?? w.chartType;
+  const cat = columns.find((c) => c.key === w.categoryColumn)?.label ?? "";
+  const val = w.valueColumn ? columns.find((c) => c.key === w.valueColumn)?.label ?? "" : "";
+  return (
+    <div className="panel flex min-w-0 flex-col rounded-lg p-3">
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-display min-w-0 truncate text-sm font-semibold">{w.title}</p>
+          <p className="truncate text-[11px] text-muted-foreground">{tipo} · {AGG[w.aggregation]}{val ? ` · ${val}` : ""}{cat ? ` · ${cat}` : ""}</p>
+        </div>
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" aria-label={`Remover ${w.title} da prévia`} onClick={onRemover}><X /></Button>
+      </div>
+      <div className="min-w-0" style={{ height: ALT_PREVIA(w.chartType) }}>
+        <Componente w={w} data={data} columns={columns} onPick={() => {}} onAll={() => {}} />
+      </div>
+    </div>
+  );
+}
+
 function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[] }) {
-  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false); const [tipos, setTipos] = useState<Set<ChartType>>(new Set());
+  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false);
+  const [etapa, setEtapa] = useState<"selecao" | "previa">("selecao");
+  const [tipos, setTipos] = useState<Set<ChartType>>(new Set());
+  const [fora, setFora] = useState<Set<string>>(new Set());
   const lista = useMemo(() => {
     if (!open) return [];
     const p = perfilBase(data, columns); const vistos = new Set<string>();
     return [...montarModelo("executivo", p), ...sugestoes(p)].filter((s) => { const k = `${s.chartType}|${s.categoryColumn}|${s.aggregation ?? "count"}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
   }, [open, data, columns]);
   const grupos = useMemo(() => { const m = new Map<ChartType, number>(); for (const s of lista) { const t = (s.chartType ?? "bar") as ChartType; m.set(t, (m.get(t) ?? 0) + 1); } return [...m.entries()]; }, [lista]);
-  useEffect(() => { if (open) setTipos(new Set(grupos.map(([t]) => t))); }, [open, grupos]);
+  const sel = useMemo(() => lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType) && !fora.has(chaveDe(s))), [lista, tipos, fora]);
+  useEffect(() => { if (open) { setTipos(new Set(grupos.map(([t]) => t))); setFora(new Set()); setEtapa("selecao"); } }, [open, grupos]);
   const gerar = async () => {
     setBusy(true);
     try {
-      const sel = lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType));
       await aplicarSugestoes(sel); setOpen(false); toast.success(`Dashboard automático criado com ${sel.length} componentes`);
     } catch { toast.error("Não foi possível gerar o dashboard automático"); } finally { setBusy(false); }
   };
@@ -315,16 +566,37 @@ function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[]
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button><Sparkles />Gerar dashboard automático</Button></DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle className="font-display">Dashboard automático</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">Escolha quais tipos de gráfico incluir. Os componentes são adicionados ao final do painel e podem ser editados, movidos e excluídos depois.</p>
-        <div className="grid grid-cols-2 gap-2">
-          {grupos.map(([t, n]) => { const ativo = tipos.has(t); return (
-            <button key={t} type="button" onClick={() => alternar(t)} className={`flex items-center justify-between gap-2 rounded-md border p-2 text-left text-sm transition-colors ${ativo ? "border-primary bg-primary/10" : "border-border opacity-60"}`}>
-              <span>{CHART_TYPES.find((c) => c.value === t)?.label ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
-            </button>); })}
-        </div>
-        <Button onClick={gerar} disabled={busy || tipos.size === 0}><Sparkles />{busy ? "Gerando…" : `Adicionar ${lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType)).length} componentes`}</Button>
+      <DialogContent className={etapa === "previa" ? "grid-rows-[auto_auto_minmax(0,1fr)_auto] max-h-[92vh] max-w-[min(96vw,1000px)] overflow-hidden" : "max-w-md"}>
+        <DialogHeader><DialogTitle className="font-display">{etapa === "previa" ? "Prévia do dashboard automático" : "Dashboard automático"}</DialogTitle></DialogHeader>
+        {etapa === "selecao" ? (
+          <>
+            <p className="text-sm text-muted-foreground">Escolha quais tipos de gráfico incluir. Os componentes são adicionados ao final do painel e podem ser editados, movidos e excluídos depois.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {grupos.map(([t, n]) => { const ativo = tipos.has(t); return (
+                <button key={t} type="button" onClick={() => alternar(t)} className={`flex items-center justify-between gap-2 rounded-md border p-2 text-left text-sm transition-colors ${ativo ? "border-primary bg-primary/10" : "border-border opacity-60"}`}>
+                  <span>{CHART_TYPES.find((c) => c.value === t)?.label ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
+                </button>); })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setEtapa("previa")} disabled={tipos.size === 0}><Eye />Ver prévia ({sel.length})</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">Veja como cada componente fica com os seus dados antes de adicionar. Remova o que não quiser ou volte para mudar os tipos.</p>
+            <div className="min-h-0 overflow-y-auto pr-1">
+              {sel.length === 0 ? (
+                <div className="panel rounded-lg p-6 text-center text-sm text-muted-foreground">Nenhum componente selecionado. Volte e ligue ao menos um tipo.</div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">{sel.map((s, i) => <PreviaComponente key={chaveDe(s)} s={s} i={i} data={data} columns={columns} onRemover={() => setFora((p) => new Set(p).add(chaveDe(s)))} />)}</div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setEtapa("selecao")}><ArrowLeft />Voltar</Button>
+              <Button onClick={gerar} disabled={busy || sel.length === 0}><Sparkles />{busy ? "Adicionando…" : `Adicionar ${sel.length} componentes`}</Button>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -389,7 +661,7 @@ function Dashboards() {
             <AutoDash data={data} columns={columns} />
             <Modelos data={data} columns={columns} />
             <Button variant="outline" onClick={() => adicionarWidget()}><Plus />Novo componente</Button>
-            <FichaDialog data={filtrados} columns={columns} widgets={widgets.filter((w) => !["kpi", "table", "map_uf", "map_points"].includes(w.chartType))} filters={filters} />
+            <FichaDialog data={filtrados} columns={columns} widgets={widgets.filter((w) => !["kpi", "table", "map_uf", "map_brasil", "map_points"].includes(w.chartType))} filters={filters} />
           </div>
         )}
       </div>
