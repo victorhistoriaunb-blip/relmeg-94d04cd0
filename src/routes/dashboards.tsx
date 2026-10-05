@@ -184,7 +184,7 @@ const REGIAO_UF: Record<string, string> = { AC: "Norte", AM: "Norte", AP: "Norte
 const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
 const ufsDaRegiao = (r: string) => Object.keys(REGIAO_UF).filter((u) => REGIAO_UF[u] === r);
 
-const TRACADO = (brasilUf as unknown as { uf: string; nome: string; polys: number[][][][] }[]).map((u) => ({
+const TRACADO = (brasilUf as unknown as { uf: string; nome: string; polys: [number, number][][][] }[]).map((u) => ({
   uf: u.uf,
   nome: u.nome,
   aneis: u.polys.flatMap((p) => p.map((r) => r.map(([lon, lat]) => [lon * RAD, -mercY(lat)] as [number, number]))),
