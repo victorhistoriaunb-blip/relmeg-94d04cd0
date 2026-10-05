@@ -295,19 +295,64 @@ function DrillDialog({ alvo, columns, onClose }: { alvo: { titulo: string; regs:
   );
 }
 
+const chaveDe = (s: Sugestao) => `${s.chartType ?? "bar"}|${s.categoryColumn}|${s.aggregation ?? "count"}`;
+
+function widgetDeSugestao(s: Sugestao, i: number): DashboardWidget {
+  return {
+    id: `previa-${i}`,
+    title: s.title,
+    description: "",
+    chartType: (s.chartType ?? "bar") as ChartType,
+    categoryColumn: s.categoryColumn,
+    valueColumn: s.valueColumn ?? null,
+    aggregation: s.aggregation ?? "count",
+    itemLimit: s.itemLimit ?? 10,
+    position: i,
+    isVisible: true,
+    isFeatured: false,
+    layout: s.layout ?? { w: 1, h: 260 },
+  };
+}
+
+const ALT_PREVIA = (t: ChartType) => (t === "kpi" ? 120 : t === "map_uf" ? 340 : t === "table" ? 240 : 220);
+
+function PreviaComponente({ s, i, data, columns, onRemover }: { s: Sugestao; i: number; data: DataRecord[]; columns: DataColumn[]; onRemover: () => void }) {
+  const w = useMemo(() => widgetDeSugestao(s, i), [s, i]);
+  const tipo = CHART_TYPES.find((c) => c.value === w.chartType)?.label ?? w.chartType;
+  const cat = columns.find((c) => c.key === w.categoryColumn)?.label ?? "";
+  const val = w.valueColumn ? columns.find((c) => c.key === w.valueColumn)?.label ?? "" : "";
+  return (
+    <div className="panel flex min-w-0 flex-col rounded-lg p-3">
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-display min-w-0 truncate text-sm font-semibold">{w.title}</p>
+          <p className="truncate text-[11px] text-muted-foreground">{tipo} · {AGG[w.aggregation]}{val ? ` · ${val}` : ""}{cat ? ` · ${cat}` : ""}</p>
+        </div>
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" aria-label={`Remover ${w.title} da prévia`} onClick={onRemover}><X /></Button>
+      </div>
+      <div className="min-w-0" style={{ height: ALT_PREVIA(w.chartType) }}>
+        <Componente w={w} data={data} columns={columns} onPick={() => {}} onAll={() => {}} />
+      </div>
+    </div>
+  );
+}
+
 function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[] }) {
-  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false); const [tipos, setTipos] = useState<Set<ChartType>>(new Set());
+  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false);
+  const [etapa, setEtapa] = useState<"selecao" | "previa">("selecao");
+  const [tipos, setTipos] = useState<Set<ChartType>>(new Set());
+  const [fora, setFora] = useState<Set<string>>(new Set());
   const lista = useMemo(() => {
     if (!open) return [];
     const p = perfilBase(data, columns); const vistos = new Set<string>();
     return [...montarModelo("executivo", p), ...sugestoes(p)].filter((s) => { const k = `${s.chartType}|${s.categoryColumn}|${s.aggregation ?? "count"}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
   }, [open, data, columns]);
   const grupos = useMemo(() => { const m = new Map<ChartType, number>(); for (const s of lista) { const t = (s.chartType ?? "bar") as ChartType; m.set(t, (m.get(t) ?? 0) + 1); } return [...m.entries()]; }, [lista]);
-  useEffect(() => { if (open) setTipos(new Set(grupos.map(([t]) => t))); }, [open, grupos]);
+  const sel = useMemo(() => lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType) && !fora.has(chaveDe(s))), [lista, tipos, fora]);
+  useEffect(() => { if (open) { setTipos(new Set(grupos.map(([t]) => t))); setFora(new Set()); setEtapa("selecao"); } }, [open, grupos]);
   const gerar = async () => {
     setBusy(true);
     try {
-      const sel = lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType));
       await aplicarSugestoes(sel); setOpen(false); toast.success(`Dashboard automático criado com ${sel.length} componentes`);
     } catch { toast.error("Não foi possível gerar o dashboard automático"); } finally { setBusy(false); }
   };
@@ -315,16 +360,37 @@ function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[]
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button><Sparkles />Gerar dashboard automático</Button></DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle className="font-display">Dashboard automático</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">Escolha quais tipos de gráfico incluir. Os componentes são adicionados ao final do painel e podem ser editados, movidos e excluídos depois.</p>
-        <div className="grid grid-cols-2 gap-2">
-          {grupos.map(([t, n]) => { const ativo = tipos.has(t); return (
-            <button key={t} type="button" onClick={() => alternar(t)} className={`flex items-center justify-between gap-2 rounded-md border p-2 text-left text-sm transition-colors ${ativo ? "border-primary bg-primary/10" : "border-border opacity-60"}`}>
-              <span>{CHART_TYPES.find((c) => c.value === t)?.label ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
-            </button>); })}
-        </div>
-        <Button onClick={gerar} disabled={busy || tipos.size === 0}><Sparkles />{busy ? "Gerando…" : `Adicionar ${lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType)).length} componentes`}</Button>
+      <DialogContent className={etapa === "previa" ? "grid-rows-[auto_auto_minmax(0,1fr)_auto] max-h-[92vh] max-w-[min(96vw,1000px)] overflow-hidden" : "max-w-md"}>
+        <DialogHeader><DialogTitle className="font-display">{etapa === "previa" ? "Prévia do dashboard automático" : "Dashboard automático"}</DialogTitle></DialogHeader>
+        {etapa === "selecao" ? (
+          <>
+            <p className="text-sm text-muted-foreground">Escolha quais tipos de gráfico incluir. Os componentes são adicionados ao final do painel e podem ser editados, movidos e excluídos depois.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {grupos.map(([t, n]) => { const ativo = tipos.has(t); return (
+                <button key={t} type="button" onClick={() => alternar(t)} className={`flex items-center justify-between gap-2 rounded-md border p-2 text-left text-sm transition-colors ${ativo ? "border-primary bg-primary/10" : "border-border opacity-60"}`}>
+                  <span>{CHART_TYPES.find((c) => c.value === t)?.label ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
+                </button>); })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setEtapa("previa")} disabled={tipos.size === 0}><Eye />Ver prévia ({sel.length})</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">Veja como cada componente fica com os seus dados antes de adicionar. Remova o que não quiser ou volte para mudar os tipos.</p>
+            <div className="min-h-0 overflow-y-auto pr-1">
+              {sel.length === 0 ? (
+                <div className="panel rounded-lg p-6 text-center text-sm text-muted-foreground">Nenhum componente selecionado. Volte e ligue ao menos um tipo.</div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">{sel.map((s, i) => <PreviaComponente key={chaveDe(s)} s={s} i={i} data={data} columns={columns} onRemover={() => setFora((p) => new Set(p).add(chaveDe(s)))} />)}</div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setEtapa("selecao")}><ArrowLeft />Voltar</Button>
+              <Button onClick={gerar} disabled={busy || sel.length === 0}><Sparkles />{busy ? "Adicionando…" : `Adicionar ${sel.length} componentes`}</Button>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
