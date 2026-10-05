@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactElement } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
-import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical, ArrowLeft, X } from "lucide-react";
+import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical, ArrowLeft, X, Minus, Search, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
