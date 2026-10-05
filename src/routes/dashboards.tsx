@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
 import { Plus, Star, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
@@ -17,7 +17,7 @@ import { aplicarSugestoes } from "@/lib/relmeg/store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cellText } from "@/lib/relmeg/types";
 import { Maximize2, Minimize2, LayoutTemplate, Sparkles, Download } from "lucide-react";
-import { CHART_TYPES, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
+import { CHART_TYPES, type ChartType, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -321,7 +321,7 @@ function AutoDash({ data, columns }: { data: DataRecord[]; columns: DataColumn[]
         <div className="grid grid-cols-2 gap-2">
           {grupos.map(([t, n]) => { const ativo = tipos.has(t); return (
             <button key={t} type="button" onClick={() => alternar(t)} className={`flex items-center justify-between gap-2 rounded-md border p-2 text-left text-sm transition-colors ${ativo ? "border-primary bg-primary/10" : "border-border opacity-60"}`}>
-              <span>{CHART_TYPES[t] ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
+              <span>{CHART_TYPES.find((c) => c.value === t)?.label ?? t}</span><span className="text-xs text-muted-foreground">{n}</span>
             </button>); })}
         </div>
         <Button onClick={gerar} disabled={busy || tipos.size === 0}><Sparkles />{busy ? "Gerando…" : `Adicionar ${lista.filter((s) => tipos.has((s.chartType ?? "bar") as ChartType)).length} componentes`}</Button>
