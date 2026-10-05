@@ -68,7 +68,7 @@ export function agregar(data: DataRecord[], w: Pick<DashboardWidget, "categoryCo
   const temporal = col?.type === "date";
   out.sort(temporal ? (a, b) => a.name.localeCompare(b.name) : (a, b) => b.total - a.total);
   const lim = w.itemLimit || 10;
-  if (temporal || out.length <= lim || w.chartType === "map_uf") return out;
+  if (temporal || out.length <= lim || w.chartType === "map_uf" || w.chartType === "map_brasil") return out;
   const top = out.slice(0, lim); const resto = out.slice(lim);
   if (!outros) return top;
   // "Outros" só tem significado aditivo para contagem e soma.
@@ -144,7 +144,7 @@ export type Sugestao = Omit<Partial<DashboardWidget>, "layout"> & { categoryColu
 export function sugestoes(perfil: ReturnType<typeof perfilBase>): Sugestao[] {
   const by = (p: Papel) => perfil.cols.filter((c) => c.papel === p);
   const out: Sugestao[] = [];
-  const uf = by("uf")[0]; if (uf) out.push({ title: `Registros por ${uf.col.label}`, chartType: "map_uf", categoryColumn: uf.col.key, layout: { w: 2, h: 420 } });
+  const uf = by("uf")[0]; if (uf) out.push({ title: `Registros por ${uf.col.label}`, chartType: "map_brasil", categoryColumn: uf.col.key, layout: { w: 2, h: 460 } });
   const lat = by("lat")[0], lng = by("lng")[0]; if (lat && lng) out.push({ title: "Mapa de ocorrências", chartType: "map_points", categoryColumn: lat.col.key, valueColumn: lng.col.key, layout: { w: 2, h: 420 } });
   for (const d of by("data").slice(0, 1)) out.push({ title: `Evolução mensal — ${d.col.label}`, chartType: "area", categoryColumn: d.col.key, itemLimit: 60, layout: { w: 2, h: 320 } });
   for (const c of by("categoria").filter((c) => c.unicos > 1).sort((a, b) => b.preenchidos - a.preenchidos).slice(0, 4)) out.push({ title: `Quantidade por ${c.col.label}`, chartType: c.unicos <= 6 ? "donut" : "bar", categoryColumn: c.col.key, layout: { w: 1, h: 320 } });
@@ -179,7 +179,7 @@ export function montarModelo(id: string, perfil: ReturnType<typeof perfilBase>):
   const kpiNums: Sugestao[] = nums.slice(0, 2).map((c) => ({ title: `Total de ${c.col.label}`, chartType: "kpi", aggregation: "sum", valueColumn: c.col.key, categoryColumn: c.col.key, layout: { w: 1, h: 240 } }));
   const kpiUnicos: Sugestao[] = cats.slice(0, 2).map((c) => ({ title: `${c.col.label} distintos`, chartType: "kpi", aggregation: "unique", valueColumn: c.col.key, categoryColumn: c.col.key, layout: { w: 1, h: 240 } }));
   const geo: Sugestao[] = [
-    ...(uf ? [{ title: `Registros por ${uf.col.label}`, chartType: "map_uf", categoryColumn: uf.col.key, layout: { w: 2, h: 440 } } as Sugestao] : []),
+    ...(uf ? [{ title: `Registros por ${uf.col.label}`, chartType: "map_brasil", categoryColumn: uf.col.key, layout: { w: 2, h: 480 } } as Sugestao] : []),
     ...(lat && lng ? [{ title: "Mapa de ocorrências", chartType: "map_points", categoryColumn: lat.col.key, valueColumn: lng.col.key, layout: { w: 2, h: 440 } } as Sugestao] : []),
     ...(mun ? [{ title: `Ranking por ${mun.col.label}`, chartType: "bar", categoryColumn: mun.col.key, itemLimit: 15, layout: { w: 1, h: 440 } } as Sugestao] : []),
   ];

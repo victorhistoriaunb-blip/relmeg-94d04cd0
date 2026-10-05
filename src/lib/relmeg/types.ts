@@ -3,9 +3,9 @@ export type ColumnType = "text" | "number" | "date" | "boolean";
 export type DataColumn = { key: string; label: string; type: ColumnType; position: number };
 export type DataRecord = { id: string; data: Record<string, CellValue>; position: number };
 export type Dataset = { id: string; name: string; columns: DataColumn[] };
-export type ChartType = "kpi" | "table" | "map_uf" | "map_points" | "bar" | "column" | "stacked" | "pie" | "donut" | "line" | "area" | "radar" | "radial" | "treemap" | "funnel" | "scatter";
+export type ChartType = "kpi" | "table" | "map_uf" | "map_brasil" | "map_points" | "bar" | "column" | "stacked" | "pie" | "donut" | "line" | "area" | "radar" | "radial" | "treemap" | "funnel" | "scatter";
 export const CHART_TYPES: { value: ChartType; label: string }[] = [
-  { value: "kpi", label: "Cartão KPI" }, { value: "table", label: "Tabela resumo" }, { value: "map_uf", label: "Mapa por estado (UF)" }, { value: "map_points", label: "Mapa de pontos (lat/long)" }, { value: "bar", label: "Barras horizontais" }, { value: "column", label: "Colunas" }, { value: "stacked", label: "Colunas + linha" }, { value: "pie", label: "Pizza" }, { value: "donut", label: "Rosca" }, { value: "line", label: "Linha" }, { value: "area", label: "Área" }, { value: "radar", label: "Radar" }, { value: "radial", label: "Barras radiais" }, { value: "treemap", label: "Mapa de árvore" }, { value: "funnel", label: "Funil" }, { value: "scatter", label: "Dispersão" },
+  { value: "kpi", label: "Cartão KPI" }, { value: "table", label: "Tabela resumo" }, { value: "map_brasil", label: "Mapa do Brasil (zoom)" }, { value: "map_uf", label: "Mapa por estado (UF)" }, { value: "map_points", label: "Mapa de pontos (lat/long)" }, { value: "bar", label: "Barras horizontais" }, { value: "column", label: "Colunas" }, { value: "stacked", label: "Colunas + linha" }, { value: "pie", label: "Pizza" }, { value: "donut", label: "Rosca" }, { value: "line", label: "Linha" }, { value: "area", label: "Área" }, { value: "radar", label: "Radar" }, { value: "radial", label: "Barras radiais" }, { value: "treemap", label: "Mapa de árvore" }, { value: "funnel", label: "Funil" }, { value: "scatter", label: "Dispersão" },
 ];
 export type DashboardWidget = {
   id: string;
