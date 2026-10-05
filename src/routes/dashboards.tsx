@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ReactElement } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Funnel, FunnelChart, LabelList, Legend, Line, LineChart, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, Treemap, XAxis, YAxis } from "recharts";
@@ -303,7 +303,7 @@ function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: Da
     };
   }, []);
 
-  const aoPressionar = (e: React.PointerEvent<SVGSVGElement>) => {
+  const aoPressionar = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     moveu.current = 0;
@@ -314,7 +314,7 @@ function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: Da
       arr.current = null;
     }
   };
-  const aoTecla = (e: React.KeyboardEvent<SVGSVGElement>) => {
+  const aoTecla = (e: ReactKeyboardEvent<SVGSVGElement>) => {
     const passo = 60 / vista.k;
     if (e.key === "+" || e.key === "=") { e.preventDefault(); setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1.4)); }
     else if (e.key === "-" || e.key === "_") { e.preventDefault(); setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1 / 1.4)); }
@@ -384,6 +384,7 @@ function Componente({ w, data, columns, onPick, onAll }: { w: DashboardWidget; d
     const d = agregar(data, w, { columns }); const total = d.reduce((a, b) => a + b.total, 0);
     return <div className="h-full overflow-auto"><table className="w-full text-sm"><thead className="sticky top-0 bg-card text-left text-xs text-muted-foreground"><tr><th className="py-1.5">{columns.find((c) => c.key === w.categoryColumn)?.label}</th><th className="text-right">{AGG[w.aggregation]}</th><th className="text-right">%</th></tr></thead><tbody>{d.map((p) => <tr key={p.name} onClick={() => onPick(p.name)} className="cursor-pointer border-t border-border hover:bg-secondary/40"><td className="py-1.5 pr-2">{p.name}</td><td className="text-right tabular-nums">{fmtNum(p.total)}</td><td className="text-right tabular-nums text-muted-foreground">{total ? fmtNum((p.total / total) * 100) : 0}%</td></tr>)}</tbody></table></div>;
   }
+  if (w.chartType === "map_brasil") return <MapaBrasil w={w} data={data} columns={columns} onPick={onPick} />;
   if (w.chartType === "map_uf") return <MapaUF w={w} data={data} onPick={onPick} />;
   if (w.chartType === "map_points") return <MapaPontos w={w} data={data} />;
   return <ResponsiveContainer width="100%" height="100%"><Grafico w={w} data={data} columns={columns} onPick={onPick} /></ResponsiveContainer>;
@@ -419,7 +420,7 @@ function Editor({ w, columns }: { w: DashboardWidget; columns: DataColumn[] }) {
             <SelectContent>{(w.aggregation === "unique" ? columns : nums).map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}</SelectContent>
           </Select>
         )}
-        {w.chartType !== "kpi" && <Input aria-label="Máximo de categorias" type="number" min={1} max={200} value={w.itemLimit} onChange={(e) => editarWidget(w.id, { itemLimit: Math.max(1, Math.min(200, Number(e.target.value) || 10)) })} />}
+        {w.chartType !== "kpi" && !w.chartType.startsWith("map_") && <Input aria-label="Máximo de categorias" type="number" min={1} max={200} value={w.itemLimit} onChange={(e) => editarWidget(w.id, { itemLimit: Math.max(1, Math.min(200, Number(e.target.value) || 10)) })} />}
       </>)}
     </div>
   );
@@ -519,7 +520,7 @@ function widgetDeSugestao(s: Sugestao, i: number): DashboardWidget {
   };
 }
 
-const ALT_PREVIA = (t: ChartType) => (t === "kpi" ? 120 : t === "map_uf" ? 340 : t === "table" ? 240 : 220);
+const ALT_PREVIA = (t: ChartType) => (t === "kpi" ? 120 : t === "map_uf" || t === "map_brasil" ? 360 : t === "table" ? 240 : 220);
 
 function PreviaComponente({ s, i, data, columns, onRemover }: { s: Sugestao; i: number; data: DataRecord[]; columns: DataColumn[]; onRemover: () => void }) {
   const w = useMemo(() => widgetDeSugestao(s, i), [s, i]);
@@ -660,7 +661,7 @@ function Dashboards() {
             <AutoDash data={data} columns={columns} />
             <Modelos data={data} columns={columns} />
             <Button variant="outline" onClick={() => adicionarWidget()}><Plus />Novo componente</Button>
-            <FichaDialog data={filtrados} columns={columns} widgets={widgets.filter((w) => !["kpi", "table", "map_uf", "map_points"].includes(w.chartType))} filters={filters} />
+            <FichaDialog data={filtrados} columns={columns} widgets={widgets.filter((w) => !["kpi", "table", "map_uf", "map_brasil", "map_points"].includes(w.chartType))} filters={filters} />
           </div>
         )}
       </div>
