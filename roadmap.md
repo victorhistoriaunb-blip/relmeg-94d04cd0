@@ -7,3 +7,5 @@
 - [ ] Adaptar exportações e ajuda ao modelo universal
 - [ ] Revisar contraste, responsividade e assinatura
 - [ ] Validar fluxos e telas em desktop, tablet e celular
+- [ ] Prévia dos componentes selecionados antes de adicionar ao dashboard automático
+- [ ] Mapa do Brasil por UF com zoom e deslocamento livre (regiões)
