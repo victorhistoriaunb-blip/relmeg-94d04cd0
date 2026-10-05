@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { cellText } from "@/lib/relmeg/types";
 import { Maximize2, Minimize2, LayoutTemplate, Sparkles, Download } from "lucide-react";
 import { CHART_TYPES, type ChartType, type DashboardWidget, type DataColumn, type DataRecord } from "@/lib/relmeg/types";
+import brasilUf from "@/assets/brasil-uf.json";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -166,6 +167,210 @@ function MapaPontos({ w, data }: { w: DashboardWidget; data: DataRecord[] }) {
         </ScatterChart>
       </ResponsiveContainer>
       <p className="mt-1 text-xs text-muted-foreground">{fmtNum(pts.length)} de {fmtNum(data.length)} registros com coordenadas válidas.</p>
+    </div>
+  );
+}
+
+type UfForma = { uf: string; nome: string; d: string; x0: number; y0: number; x1: number; y1: number };
+type Vista = { k: number; x: number; y: number };
+
+const RAD = Math.PI / 180;
+const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * RAD) / 2));
+const VB = { w: 640, h: 700 };
+const PAD = 16;
+const MIN_K = 1;
+const MAX_K = 26;
+const REGIAO_UF: Record<string, string> = { AC: "Norte", AM: "Norte", AP: "Norte", PA: "Norte", RO: "Norte", RR: "Norte", TO: "Norte", AL: "Nordeste", BA: "Nordeste", CE: "Nordeste", MA: "Nordeste", PB: "Nordeste", PE: "Nordeste", PI: "Nordeste", RN: "Nordeste", SE: "Nordeste", DF: "Centro-Oeste", GO: "Centro-Oeste", MT: "Centro-Oeste", MS: "Centro-Oeste", ES: "Sudeste", MG: "Sudeste", RJ: "Sudeste", SP: "Sudeste", PR: "Sul", RS: "Sul", SC: "Sul" };
+const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
+const ufsDaRegiao = (r: string) => Object.keys(REGIAO_UF).filter((u) => REGIAO_UF[u] === r);
+
+const TRACADO = (brasilUf as unknown as { uf: string; nome: string; polys: number[][][][] }[]).map((u) => ({
+  uf: u.uf,
+  nome: u.nome,
+  aneis: u.polys.flatMap((p) => p.map((r) => r.map(([lon, lat]) => [lon * RAD, -mercY(lat)] as [number, number]))),
+}));
+
+const LIMITES = (() => {
+  const b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  for (const u of TRACADO) for (const a of u.aneis) for (const [x, y] of a) { if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x; if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y; }
+  return b;
+})();
+const ESC = Math.min((VB.w - PAD * 2) / (LIMITES.x1 - LIMITES.x0), (VB.h - PAD * 2) / (LIMITES.y1 - LIMITES.y0));
+const OX = (VB.w - (LIMITES.x1 - LIMITES.x0) * ESC) / 2 - LIMITES.x0 * ESC;
+const OY = (VB.h - (LIMITES.y1 - LIMITES.y0) * ESC) / 2 - LIMITES.y0 * ESC;
+
+const FORMAS: UfForma[] = TRACADO.map((u) => {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const d = u.aneis.map((r) => "M" + r.map(([lo, la]) => {
+    const x = lo * ESC + OX; const y = la * ESC + OY;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    return `${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join("L") + "Z").join("");
+  return { uf: u.uf, nome: u.nome, d, x0, y0, x1, y1 };
+});
+
+const clampVista = (v: Vista): Vista => ({ k: v.k, x: Math.max(VB.w - VB.w * v.k, Math.min(0, v.x)), y: Math.max(VB.h - VB.h * v.k, Math.min(0, v.y)) });
+const zoomEm = (v: Vista, px: number, py: number, f: number): Vista => {
+  const k = Math.max(MIN_K, Math.min(MAX_K, v.k * f));
+  const r = k / v.k;
+  return clampVista({ k, x: px - (px - v.x) * r, y: py - (py - v.y) * r });
+};
+
+function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; onPick: (n: string) => void }) {
+  const rotulo = columns.find((c) => c.key === w.categoryColumn)?.label ?? "UF";
+  const [vista, setVista] = useState<Vista>({ k: 1, x: 0, y: 0 });
+  const [sel, setSel] = useState<string | null>(null);
+  const [pasa, setPasa] = useState<{ nome: string; total: number } | null>(null);
+  const svg = useRef<SVGSVGElement | null>(null);
+  const ptrs = useRef(new Map<number, { x: number; y: number }>());
+  const arr = useRef<{ x: number; y: number } | null>(null);
+  const pin = useRef<number | null>(null);
+  const moveu = useRef(0);
+
+  const tot = useMemo(() => {
+    const m = new Map<string, { total: number; nome: string }>();
+    for (const p of agregar(data, { ...w, chartType: "map_brasil", itemLimit: 9999 })) {
+      const uf = ufDe(p.name); if (!uf) continue;
+      const e = m.get(uf) ?? { total: 0, nome: p.name };
+      e.total += p.total; m.set(uf, e);
+    }
+    return m;
+  }, [data, w]);
+  const max = Math.max(1, ...[...tot.values()].map((e) => e.total));
+  const sem = useMemo(() => data.filter((r) => !ufDe(r.data[w.categoryColumn])).length, [data, w]);
+
+  const paraSvg = (cx: number, cy: number) => {
+    const el = svg.current; if (!el) return null;
+    const ctm = el.getScreenCTM(); if (!ctm) return null;
+    const p = new DOMPoint(cx, cy).matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
+  };
+  const encherUfs = (ufs: string[]) => {
+    const fs = FORMAS.filter((f) => ufs.includes(f.uf));
+    if (!fs.length) return;
+    const x0 = Math.min(...fs.map((f) => f.x0)); const x1 = Math.max(...fs.map((f) => f.x1));
+    const y0 = Math.min(...fs.map((f) => f.y0)); const y1 = Math.max(...fs.map((f) => f.y1));
+    const k = Math.max(MIN_K, Math.min(MAX_K, 0.82 * Math.min(VB.w / Math.max(1, x1 - x0), VB.h / Math.max(1, y1 - y0))));
+    setVista(clampVista({ k, x: VB.w / 2 - ((x0 + x1) / 2) * k, y: VB.h / 2 - ((y0 + y1) / 2) * k }));
+  };
+
+  useEffect(() => {
+    const el = svg.current; if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const p = paraSvg(e.clientX, e.clientY); if (!p) return;
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      setVista((v) => zoomEm(v, p.x, p.y, Math.exp(-dy * 0.0018)));
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!ptrs.current.has(e.pointerId)) return;
+      const antes = ptrs.current.get(e.pointerId);
+      ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (antes) moveu.current += Math.hypot(e.clientX - antes.x, e.clientY - antes.y);
+      if (ptrs.current.size >= 2) {
+        const v = [...ptrs.current.values()]; const a = v[0]; const b = v[1];
+        if (!a || !b) return;
+        const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        const m = paraSvg((a.x + b.x) / 2, (a.y + b.y) / 2);
+        const de = pin.current;
+        if (de && m) setVista((prev) => zoomEm(prev, m.x, m.y, dist / de));
+        pin.current = dist;
+        return;
+      }
+      if (arr.current) {
+        e.preventDefault();
+        const ctm = svg.current?.getScreenCTM();
+        const sx = ctm?.a || 1; const sy = ctm?.d || 1;
+        const dx = (e.clientX - arr.current.x) / sx; const dy = (e.clientY - arr.current.y) / sy;
+        arr.current = { x: e.clientX, y: e.clientY };
+        setVista((prev) => clampVista({ k: prev.k, x: prev.x + dx, y: prev.y + dy }));
+      }
+    };
+    const onUp = (e: PointerEvent) => {
+      ptrs.current.delete(e.pointerId);
+      if (ptrs.current.size < 2) pin.current = null;
+      if (ptrs.current.size === 0) arr.current = null;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, []);
+
+  const aoPressionar = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    moveu.current = 0;
+    if (ptrs.current.size === 1) arr.current = { x: e.clientX, y: e.clientY };
+    else if (ptrs.current.size === 2) {
+      const v = [...ptrs.current.values()]; const a = v[0]; const b = v[1];
+      if (a && b) pin.current = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      arr.current = null;
+    }
+  };
+  const aoTecla = (e: React.KeyboardEvent<SVGSVGElement>) => {
+    const passo = 60 / vista.k;
+    if (e.key === "+" || e.key === "=") { e.preventDefault(); setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1.4)); }
+    else if (e.key === "-" || e.key === "_") { e.preventDefault(); setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1 / 1.4)); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); setVista((v) => clampVista({ ...v, x: v.x + passo })); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); setVista((v) => clampVista({ ...v, x: v.x - passo })); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setVista((v) => clampVista({ ...v, y: v.y + passo })); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); setVista((v) => clampVista({ ...v, y: v.y - passo })); }
+    else if (e.key === "Escape" || e.key === "0") { setSel(null); setVista({ k: 1, x: 0, y: 0 }); }
+  };
+  const reiniciar = () => { setSel(null); setVista({ k: 1, x: 0, y: 0 }); };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button size="sm" variant={vista.k === 1 ? "default" : "outline"} onClick={reiniciar}>Brasil</Button>
+        {REGIOES.map((r) => <Button key={r} size="sm" variant="outline" onClick={() => { setSel(null); encherUfs(ufsDaRegiao(r)); }}>{r}</Button>)}
+        <div className="ml-auto flex items-center gap-1">
+          <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Aproximar" onClick={() => setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1.5))}><Plus className="h-3.5 w-3.5" /></Button>
+          <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Afastar" onClick={() => setVista((v) => zoomEm(v, VB.w / 2, VB.h / 2, 1 / 1.5))}><Minus className="h-3.5 w-3.5" /></Button>
+          <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Ver o Brasil inteiro" onClick={reiniciar}><Maximize className="h-3.5 w-3.5" /></Button>
+        </div>
+      </div>
+      <div className="relative mt-2 min-h-0 flex-1 overflow-hidden rounded-lg border border-border">
+        <svg ref={svg} viewBox={`0 0 ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid meet" className="h-full w-full touch-none select-none" role="img" aria-label={`Mapa do Brasil por ${rotulo}`} onPointerDown={aoPressionar} tabIndex={0} onKeyDown={aoTecla}>
+          <g transform={`translate(${vista.x} ${vista.y}) scale(${vista.k})`}>
+            {FORMAS.map((f) => {
+              const e = tot.get(f.uf);
+              const a = e ? 0.18 + 0.82 * (e.total / max) : 0;
+              return (
+                <path key={f.uf} d={f.d}
+                  onClick={() => { if (moveu.current > 6) return; setSel(f.uf); encherUfs([f.uf]); }}
+                  onPointerEnter={() => setPasa({ nome: f.nome, total: e?.total ?? 0 })}
+                  onPointerLeave={() => setPasa(null)}
+                  fill={e ? `oklch(0.66 0.17 255 / ${a.toFixed(3)})` : "oklch(0.26 0.03 264)"}
+                  stroke={sel === f.uf ? "oklch(0.96 0.01 250)" : "oklch(0.46 0.05 262)"}
+                  strokeWidth={sel === f.uf ? 2 : 0.8}
+                  vectorEffect="non-scaling-stroke"
+                  className="cursor-pointer transition-[fill,stroke] duration-150">
+                  <title>{`${f.nome}: ${e ? fmtNum(e.total) : 0}`}</title>
+                </path>
+              );
+            })}
+          </g>
+        </svg>
+        <div className="pointer-events-none absolute right-2 top-2 rounded-md border border-border bg-card/90 px-2 py-1 text-[11px] text-muted-foreground">{vista.k > 1.05 ? `Zoom ${fmtNum(Math.round(vista.k * 10) / 10)}×` : "Roda, pinça ou +/− para dar zoom"}</div>
+        {pasa && <div className="pointer-events-none absolute bottom-2 left-2 rounded-md border border-border bg-card/95 px-2 py-1 text-xs"><span className="font-semibold">{pasa.nome}</span><span className="text-muted-foreground"> · {fmtNum(pasa.total)}</span></div>}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-foreground">{fmtNum(data.length - sem)} de {fmtNum(data.length)} registros com UF</span>
+        <span className="flex items-center gap-1">
+          <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255 / 0.18)" }} />0
+          <span className="ml-1 h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255)" }} />{fmtNum(max)}
+        </span>
+        {sel && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)?.nome ?? sel)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
+        {sem > 0 && <span>{fmtNum(sem)} sem UF reconhecida</span>}
+      </div>
     </div>
   );
 }
