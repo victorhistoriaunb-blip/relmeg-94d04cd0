@@ -368,7 +368,8 @@ function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: Da
           <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255 / 0.18)" }} />0
           <span className="ml-1 h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255)" }} />{fmtNum(max)}
         </span>
-        {sel && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)?.nome ?? sel)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
+        {sel && tot.has(sel) && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)!.nome)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
+        {sel && !tot.has(sel) && <span>{FORMAS.find((f) => f.uf === sel)?.nome ?? sel}: nenhum registro nesta seleção</span>}
         {sem > 0 && <span>{fmtNum(sem)} sem UF reconhecida</span>}
       </div>
     </div>
