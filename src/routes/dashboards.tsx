@@ -187,7 +187,7 @@ const ufsDaRegiao = (r: string) => Object.keys(REGIAO_UF).filter((u) => REGIAO_U
 const TRACADO = (brasilUf as unknown as { uf: string; nome: string; polys: [number, number][][][] }[]).map((u) => ({
   uf: u.uf,
   nome: u.nome,
-  aneis: u.polys.flatMap((p) => p.map((r) => r.map(([lon, lat]) => [lon * RAD, -mercY(lat)] as [number, number]))),
+  aneis: u.polys.flatMap((p) => p.map((r) => r.map((pt) => [(pt[0] ?? 0) * RAD, -mercY(pt[1] ?? 0)] as [number, number]))),
 }));
 
 const LIMITES = (() => {
@@ -365,10 +365,11 @@ function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: Da
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
         <span className="rounded bg-primary/15 px-1.5 py-0.5 text-foreground">{fmtNum(data.length - sem)} de {fmtNum(data.length)} registros com UF</span>
         <span className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255 / 0.18)" }} />0
-          <span className="ml-1 h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.66 0.17 255)" }} />{fmtNum(max)}
+          <span className="h-2.5 w-2.5 rounded-sm border border-border" style={{ background: "oklch(0.66 0.17 255 / 0.35)" }} />0
+          <span className="ml-1 h-2.5 w-2.5 rounded-sm border border-border" style={{ background: "oklch(0.66 0.17 255)" }} />{fmtNum(max)}
         </span>
-        {sel && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)?.nome ?? sel)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
+        {sel && tot.has(sel) && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)!.nome)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
+        {sel && !tot.has(sel) && <span>{FORMAS.find((f) => f.uf === sel)?.nome ?? sel}: nenhum registro nesta seleção</span>}
         {sem > 0 && <span>{fmtNum(sem)} sem UF reconhecida</span>}
       </div>
     </div>

@@ -11,3 +11,4 @@
 - Várias planilhas por usuário: a visão "todas" une colunas pelo nome (coluna virtual "Planilha"); widgets dessa visão usam combined=true — permite cruzamento sem alterar dados originais.
 - Todos os números (KPIs, gráficos, mapas, drill-down, relatórios) saem de src/lib/relmeg/engine.ts sobre o dataset completo; limites de itens viram "Outros" — garante totais auditáveis.
 - Importação grava em lotes e confere a contagem salva; se divergir, apaga a base — evita bases pela metade.
+- O mapa do Brasil usa traçado próprio simplificado em src/assets/brasil-uf.json com projeção Mercator calculada no app — sem biblioteca de mapas nem chamadas a serviços de tiles, para funcionar no runtime de borda e sem rede.
