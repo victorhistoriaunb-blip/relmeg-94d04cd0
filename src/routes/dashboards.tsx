@@ -187,7 +187,7 @@ const ufsDaRegiao = (r: string) => Object.keys(REGIAO_UF).filter((u) => REGIAO_U
 const TRACADO = (brasilUf as unknown as { uf: string; nome: string; polys: [number, number][][][] }[]).map((u) => ({
   uf: u.uf,
   nome: u.nome,
-  aneis: u.polys.flatMap((p) => p.map((r) => r.map(([lon, lat]) => [lon * RAD, -mercY(lat)] as [number, number]))),
+  aneis: u.polys.flatMap((p) => p.map((r) => r.map((pt) => [(pt[0] ?? 0) * RAD, -mercY(pt[1] ?? 0)] as [number, number]))),
 }));
 
 const LIMITES = (() => {
