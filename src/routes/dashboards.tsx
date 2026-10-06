@@ -216,8 +216,24 @@ const zoomEm = (v: Vista, px: number, py: number, f: number): Vista => {
   return clampVista({ k, x: px - (px - v.x) * r, y: py - (py - v.y) * r });
 };
 
-function MapaBrasil({ w, data, columns, onPick }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; onPick: (n: string) => void }) {
+function MapaBrasil({ w, data: dataFiltrada, columns, onPick }: { w: DashboardWidget; data: DataRecord[]; columns: DataColumn[]; onPick: (n: string) => void }) {
   const rotulo = columns.find((c) => c.key === w.categoryColumn)?.label ?? "UF";
+  const { data: todos, filters } = useRelmeg();
+  const col = w.categoryColumn;
+  const filtroCol = filters.campos[col] ?? "";
+  // O mapa ignora o próprio filtro de UF para que os demais estados continuem visíveis e selecionáveis.
+  const data = useMemo(() => {
+    if (!filtroCol) return dataFiltrada;
+    const campos = { ...filters.campos }; delete campos[col];
+    return aplicarFiltros(todos, { ...filters, campos });
+  }, [dataFiltrada, todos, filters, col, filtroCol]);
+  const ufsFiltro = useMemo(() => new Set(filtroCol ? filtroCol.split("\u0001").map((v) => ufDe(v)).filter((u): u is string => !!u) : []), [filtroCol]);
+  const alternarUf = (uf: string) => {
+    const novo = new Set(ufsFiltro); if (novo.has(uf)) novo.delete(uf); else novo.add(uf);
+    const vals = new Set<string>();
+    for (const r of todos) { const t = cellText(r.data[col]); const u = ufDe(t); if (u && novo.has(u)) vals.add(t); }
+    setFilter(col, [...vals].join("\u0001"));
+  };
   const [vista, setVista] = useState<Vista>({ k: 1, x: 0, y: 0 });
   const [sel, setSel] = useState<string | null>(null);
   const [pasa, setPasa] = useState<{ nome: string; total: number } | null>(null);
