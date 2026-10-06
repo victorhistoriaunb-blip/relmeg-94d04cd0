@@ -11,7 +11,7 @@ import { KpiCards } from "@/components/relmeg/KpiCards";
 import { FichaDialog } from "@/components/relmeg/FichaDialog";
 import { EmptyState } from "@/components/relmeg/EmptyState";
 import { FilterBar, aplicarFiltros } from "@/components/relmeg/FilterBar";
-import { adicionarWidget, editarWidget, excluirWidget, moverWidget, useRelmeg } from "@/lib/relmeg/store";
+import { adicionarWidget, editarWidget, excluirWidget, moverWidget, setFilter, useRelmeg } from "@/lib/relmeg/store";
 import { agregar, fmtNum, registrosDe, valorKpi, ufDe, UFS, perfilBase, sugestoes, MODELOS, montarModelo, type Sugestao } from "@/lib/relmeg/engine";
 import { aplicarSugestoes } from "@/lib/relmeg/store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -361,12 +361,12 @@ function MapaBrasil({ w, data: dataFiltrada, columns, onPick }: { w: DashboardWi
               const a = e ? 0.18 + 0.82 * (e.total / max) : 0;
               return (
                 <path key={f.uf} d={f.d}
-                  onClick={() => { if (moveu.current > 6) return; setSel(f.uf); encherUfs([f.uf]); }}
+                  onClick={() => { if (moveu.current > 6) return; setSel(f.uf); if (e || ufsFiltro.has(f.uf)) alternarUf(f.uf); }}
                   onPointerEnter={() => setPasa({ nome: f.nome, total: e?.total ?? 0 })}
                   onPointerLeave={() => setPasa(null)}
-                  fill={e ? `oklch(0.66 0.17 255 / ${a.toFixed(3)})` : "oklch(0.26 0.03 264)"}
-                  stroke={sel === f.uf ? "oklch(0.96 0.01 250)" : "oklch(0.46 0.05 262)"}
-                  strokeWidth={sel === f.uf ? 2 : 0.8}
+                  fill={ufsFiltro.has(f.uf) ? "oklch(0.78 0.16 75)" : e ? `oklch(0.66 0.17 255 / ${(ufsFiltro.size ? a * 0.45 : a).toFixed(3)})` : "oklch(0.26 0.03 264)"}
+                  stroke={ufsFiltro.has(f.uf) || sel === f.uf ? "oklch(0.96 0.01 250)" : "oklch(0.46 0.05 262)"}
+                  strokeWidth={ufsFiltro.has(f.uf) ? 2 : sel === f.uf ? 1.5 : 0.8}
                   vectorEffect="non-scaling-stroke"
                   className="cursor-pointer transition-[fill,stroke] duration-150">
                   <title>{`${f.nome}: ${e ? fmtNum(e.total) : 0}`}</title>
@@ -387,6 +387,19 @@ function MapaBrasil({ w, data: dataFiltrada, columns, onPick }: { w: DashboardWi
         {sel && tot.has(sel) && <Button size="sm" variant="outline" onClick={() => onPick(tot.get(sel)!.nome)}><Search />Ver registros de {FORMAS.find((f) => f.uf === sel)?.nome ?? sel}</Button>}
         {sel && !tot.has(sel) && <span>{FORMAS.find((f) => f.uf === sel)?.nome ?? sel}: nenhum registro nesta seleção</span>}
         {sem > 0 && <span>{fmtNum(sem)} sem UF reconhecida</span>}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+        {ufsFiltro.size === 0 ? (
+          <span className="text-muted-foreground">Clique nos estados para filtrar todo o painel (vários de uma vez).</span>
+        ) : (
+          <>
+            <span className="text-muted-foreground">Filtrando por:</span>
+            {[...ufsFiltro].sort().map((u) => (
+              <button key={u} type="button" onClick={() => alternarUf(u)} className="flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 font-medium text-foreground hover:bg-secondary/70" aria-label={`Remover ${u} do filtro`}>{u}<X className="h-3 w-3" /></button>
+            ))}
+            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setFilter(col, "")}>Limpar UFs</Button>
+          </>
+        )}
       </div>
     </div>
   );
